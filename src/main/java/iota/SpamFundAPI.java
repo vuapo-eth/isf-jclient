@@ -60,6 +60,10 @@ public class SpamFundAPI {
 		return request(SPAM_FUND_API_URL + "updates.php", "");
 	}
 	
+	public static int requestBalance() {
+		return keepSendingUntilSuccess("balance", "", "requesting reward balance").getInt("balance");
+	}
+	
 	public static int requestCommand() {
 		return keepSendingUntilSuccess("command", "", "requesting remote command").getInt("command");
 	}

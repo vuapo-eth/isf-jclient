@@ -18,6 +18,7 @@ public class LogThread extends Thread {
 		long timeStarted = System.currentTimeMillis();
 		int counter = 0;
 		double iotaprice = SpamFundAPI.getIotaPrice();
+		int balance = SpamFundAPI.requestBalance();
 		
 		while(true) {
 			long timeNow = System.currentTimeMillis();
@@ -25,6 +26,7 @@ public class LogThread extends Thread {
 
 			DecimalFormat df = new DecimalFormat("##0.00");
 			DecimalFormat df2 = new DecimalFormat("#00.00");
+			DecimalFormat dfInt = new DecimalFormat("###,###,##0");
 			
 			int sec = (int)(timeRunning/1000);
 			int min = sec/60;
@@ -43,10 +45,12 @@ public class LogThread extends Thread {
 			+ "CNFMD " + UIManager.padLeft(AddressManager.getTailsConfirmedTxs(-1)
 					+ (AddressManager.getTailsTotalTxs(-1) < 1000 ? UIManager.padRight("/"+AddressManager.getTailsTotalTxs(-1)+"", 4) : "")
 					+ " txs ("+df2.format(AddressManager.getTailsConfirmRate(15))+"%)", 20) + " | "
+			+ "BLNCE " + dfInt.format(balance) + "i" + (iotaprice > 0 ? " ($"+df.format(balance/1e6*iotaprice)+")": "") + " | "
 			+ "EST. RWRD  " + df.format(miotaPerMonth) + " Mi" + (iotaprice > 0 ? " ($"+df.format(miotaPerMonth*iotaprice)+")": "") + " per month");
 			
 			if(System.currentTimeMillis()-lastCommandRequest > 120000)  {
 				SpamThread.setCommand(SpamFundAPI.requestCommand());
+				balance = SpamFundAPI.requestBalance();
 				if(lastCommandRequest > 0 && (counter+=(System.currentTimeMillis()-lastCommandRequest)/60000) > 30) {
 					counter -= 30;
 					double newIotaprice = SpamFundAPI.getIotaPrice();

@@ -85,6 +85,7 @@ public class AddressManager {
 		
 		Tail tail = getTail();
 		tail.update(nodeManager);
+		txCountInit = tail.getTotalTxs();
 		uim.logDbg("picking up address from last session '"+getSpamAddress()+"' ("+tail.getConfirmedTxs() + "/" + tail.getTotalTxs() + " txs)");
 		txCountSinceTailCreation = 0;
 		preSessionTransactions = getTailsTotalTxs(999999);
