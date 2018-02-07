@@ -45,13 +45,27 @@ public class Configs {
 			uim.print("If you haven't signed up yet, visit http://iotaspam.com/account/?p=signup to do so.");
 		}
 		
-		if((!settingUp && isf_email == null) || (settingUp && uim.askForBoolean("do you want your email address written into your config.ini so you don't have to type it in everytime you start this program?")))
+		boolean saveEmail = false, savePassword = false;
+		
+		if((!settingUp && isf_email == null) || (settingUp && (saveEmail = uim.askForBoolean("do you want your email address written into your config.ini so you don't have to type it in everytime you start this program?"))))
 			isf_email = uim.askQuestion(UIQuestion.Q_EMAIL);
-		if(!settingUp || (isf_email != null && uim.askForBoolean("do you want your password written in plain text into your config.ini so you don't have to type it in everytime you start this program?")))
+		if(!settingUp || (isf_email != null && (savePassword = uim.askForBoolean("do you want your password written in plain text into your config.ini so you don't have to type it in everytime you start this program?"))))
 			isf_password = uim.askQuestion(UIQuestion.Q_PASSWORD);
-		saveConfigs();
+		
 		
 		SpamFundAPI.keepSendingUntilSuccess("signin", null, "signing in");
+		
+		if(settingUp) {
+			String backup_isf_email = isf_email;
+			String backup_isf_password = isf_password;
+			if(!saveEmail)
+				isf_email = "";
+			if(!savePassword)
+				isf_password = "";
+			saveConfigs();
+			isf_email = backup_isf_email;
+			isf_password = backup_isf_password;
+		}
 	}
 	
 	private static void askForThreads(boolean firstSetup) {
@@ -118,15 +132,15 @@ public class Configs {
 		Wini wini = loadWini("editing configurations");
 		
 		String variable = "";
-		while(!variable.equals("exit")) {
+		while(!variable.equals("save")) {
 			variable = uim.askQuestion(new UIQuestion() {
 				
 				@Override
 				public boolean isAnswer(String str) {
-					return str.equals("account") || str.equals("nodes") || str.equals("threads") || /*str.equals("log") ||*/ str.equals("exit");
+					return str.equals("account") || str.equals("nodes") || str.equals("threads") || /*str.equals("log") ||*/ str.equals("save");
 				}
 				
-			}.setQuestion("what parameter do you want to change? [account/nodes/threads"/*"/log"*/+"|EXIT]")); // TODO
+			}.setQuestion("what parameter do you want to change? [account/nodes/threads"/*"/log"*/+" | SAVE]")); // TODO
 
 			if(variable.equals("threads")) {
 				askForThreads(false);
