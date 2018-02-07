@@ -150,6 +150,13 @@ public class Configs {
 		
 		wini.put("other", "threads", spam_threads);
 		
+		try {
+			wini.store();
+		} catch (IOException e) {
+			uim.logWrn("saving configurations failed");
+			uim.logException(e, false);
+		}
+		
 		uim.logDbg("configurations saved successfully");
 	}
 }
