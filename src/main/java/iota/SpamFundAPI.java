@@ -133,7 +133,7 @@ public class SpamFundAPI {
 		DecimalFormat df2 = new DecimalFormat("###,##0");
 		try {
 			JSONObject obj = new JSONArray(jsonString).getJSONObject(0);
-			uim.logInf(UIManager.ANSI_BOLD+"IOTA TICKER:     " + UIManager.ANSI_RESET + "PRICE (USD): $" + df.format(obj.getDouble("price_usd")) + "/Mi "
+			uim.logInf(UIManager.ANSI_BOLD+"IOTA TICKER:      " + UIManager.ANSI_RESET + "PRICE (USD): $" + df.format(obj.getDouble("price_usd")) + "/Mi "
 					+ "("+(obj.getDouble("percent_change_24h")<0?UIManager.ANSI_RED:UIManager.ANSI_GREEN+"+")
 					+ df.format(obj.getDouble("percent_change_24h"))+"%"+UIManager.ANSI_RESET+" in 24h)" + " | "
 					+ "PRICE (BTC): " + df2.format((int) (100000000*obj.getDouble("price_btc"))) + " sat/Mi | "

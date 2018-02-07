@@ -52,7 +52,11 @@
 	  	<artifactId>log4j-api</artifactId>
 	  	<version>2.5</version>
 	  </dependency>
-	  
+	  <dependency>
+	  	<groupId>org.ini4j</groupId>
+	  	<artifactId>ini4j</artifactId>
+	  	<version>0.5.2</version>
+	  </dependency>
   </dependencies>
   <repositories>
     <repository>
@@ -92,8 +96,6 @@
         <directory>res</directory>
         <includes>
           <include>log4j2.xml</include>
-          <include>config_template.txt</include>
-          <include>upload_data.txt</include>
         </includes>
       </resource>
     </resources>

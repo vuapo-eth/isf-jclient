@@ -13,7 +13,7 @@ public abstract class UIQuestion {
 		public boolean isAnswer(String str) {
 			return str.length() > 0;
 		}
-	}.setQuestion("what is your password?").hideInput(true);
+	}.setQuestion("what is your password? (recover it on http://iotaspam.com/account?p=recover)").hideInput(true);
 	
 	public static final UIQuestion Q_EMAIL = new UIQuestion() {
 		@Override
@@ -21,7 +21,7 @@ public abstract class UIQuestion {
 			Matcher matcher = VALID_EMAIL_ADDRESS_REGEX .matcher(str);
 	        return matcher.find();
 		}
-	}.setQuestion("what is your email address?");
+	}.setQuestion("what is your email address? (sign up on http://iotaspam.com/account?p=signup)");
 	
 	public static final UIQuestion Q_NODES = new UIQuestion() {
 		@Override
@@ -29,7 +29,7 @@ public abstract class UIQuestion {
 			Matcher matcher = VALID_NODE_ADDRESS_REGEX .matcher(str);
 	        return matcher.find();
 		}
-	}.setQuestion("which node/nodes do you want to add?");
+	}.setQuestion("please enter the API port of the node you want to add [format: 'protocol://host:port', e.g. 'http://node.example.org:14265']");
 	
 	
 	private boolean hideInput = false;

@@ -1,5 +1,10 @@
 package iota;
 
+import java.io.File;
+import java.io.IOException;
+
+import org.ini4j.Wini;
+
 import iota.ui.UIManager;
 import iota.ui.UIQuestion;
 
@@ -12,7 +17,7 @@ public class Configs {
 			isf_password = null,
 			time_format = "HH:mm:ss",
 			nodes = "";
-	public static int log_interval = 20,
+	public static int log_interval = 60,
 			spam_threads = 1,
 			sync_check_interval = 600;
 	public static boolean import_node_list = false;
@@ -34,29 +39,6 @@ public class Configs {
 		askForAccountData(true);
 		
 		saveConfigs();
-	}
-	
-	private static void saveConfigs() {
-
-		String s = FileManager.readFileFromResource("config_template.txt");
-		s = s.replace("%node_list%", nodes);
-		s = s.replace("%spam_threads%", ""+spam_threads);
-		s = s.replace("%import_node_list%", ""+(import_node_list ? "TRUE" : "FALSE"));
-		
-		if(isf_email != null) {
-			s = s.replace("#ISF_EMAIL", "ISF_EMAIL");
-			s = s.replace("%isf_email%", ""+isf_email);
-			
-			if(isf_password != null) {
-				s = s.replace("#ISF_PASSWORD", "ISF_PASSWORD");
-				s = s.replace("%isf_password%", ""+isf_password);
-			}
-		}
-		
-		byte[] buffer = s.getBytes();
-		FileManager.write("config.txt", buffer);
-		
-		uim.print("thank you. configuration is complete. all your settings were saved successfully");
 	}
 	
 	public static void askForAccountData(boolean settingUp) {
@@ -87,12 +69,9 @@ public class Configs {
 	}
 	
 	private static void askForNodeAddress() {
-		import_node_list = uim.askForBoolean("[1/3] Do you want to use the community node list from 'www.iotanode.host'? ('no' if you ONLY want to use your own node list)");
+		import_node_list = uim.askForBoolean("[1/3] Do you want to use the community node list from 'www.iotanode.host'?");
 		
-		if(!import_node_list || uim.askForBoolean("[1/3] Do you have other nodes which you want to add to your node list?")) {
-			uim.print(UIManager.ANSI_BOLD+"[1/3] Which nodes do you want to connect to?");
-			uim.print("");
-			uim.print("Format: 'protocol://host:port', e.g. 'http://node.example.org:14265'. You can add multiple nodes by seperating them with commas (',').");
+		if(!import_node_list || uim.askForBoolean("do you want to add other nodes to your node list?")) {
 			
 			do {
 				String nodeInput = uim.askQuestion(UIQuestion.Q_NODES);
@@ -105,42 +84,67 @@ public class Configs {
 	}
 	
 	private static void loadConfigs() {
-		uim.logInf("=== INITIALIZE CONFIGURATIONS ===");
-		String configString = FileManager.readFile("config.txt").replaceAll("\t", "").replaceAll(" ", "");
+		uim.logDbg("loading configurations");
 		
-		String[] configs = configString.replaceAll("(\\\\_)", " ").split("\n");
-		for(String cfg : configs) {
-			cfg = cfg.split("#")[0];
-			if(cfg.length() == 0) continue;
-			
-			String par = cfg.split(":")[0].toUpperCase();
-			String val = "";
-			for(int i = 1; i < cfg.split(":").length; i++) val += cfg.split(":")[i] + (i < cfg.split(":").length-1 ? ":" : "");
-			
-			if(!par.equals("ISF_PASS") && !par.equals("ISF_PASSWORD") && !par.equals("PASS") && !par.equals("PASSWORD"))
-				uim.logDbg("initialize parameter '"+par+"' with value '"+val+"'");
-			
-			if(par.equals("NODE_LIST") || par.equals("NODES")) { nodes = val; NodeManager.addToNodeList(val); }
-			else if(par.equals("LOG_INTERVAL")) { log_interval = Integer.parseInt(val); }
-			else if(par.equals("SYNC_CHECK_INTERVAL")) { sync_check_interval = Integer.parseInt(val); }
-			else if(par.equals("SPAM_THREADS") || par.equals("THREADS")) { spam_threads = Integer.parseInt(val); }
-			else if(par.equals("ISF_EMAIL") || par.equals("EMAIL")) { isf_email = val; }
-			else if(par.equals("ISF_PASS") || par.equals("ISF_PASSWORD") || par.equals("PASS") || par.equals("PASSWORD")) { isf_password = val; }
-			else if(par.equals("TIME_FORMAT")) { time_format = val; }
-			else if(par.equals("IMPORT_NODE_LIST")) {
-				val = val.toLowerCase();
-				import_node_list = val.equals("true");
-				if(!val.equals("true") && !val.equals("false"))
-					uim.logWrn("parameter 'import_node_list' can only be set to 'true' or 'false'. Please recheck your config.txt file");
-				if(import_node_list) NodeManager.importRemoteNodeList();
-			}
-			else { uim.logWrn("there is no such parameter: '"+par+"', please recheck your config.txt file"); }
+		Wini wini;
+		
+		try {
+			wini = new Wini(new File("config.ini"));
+		} catch (IOException e) {
+			uim.logException(e, false);
+			return;
 		}
+
+		sync_check_interval = wini.get("nodes", "sync_check_interval", int.class);
+		nodes = wini.get("nodes", "node_list");
+		NodeManager.addToNodeList(nodes);
 		
-		if(isf_email == null || isf_password == null) {
+		import_node_list = wini.get("nodes", "import_from_third_party", boolean.class);
+		if(import_node_list) NodeManager.importRemoteNodeList();
+
+		log_interval = wini.get("log", "interval", int.class);
+		time_format = wini.get("log", "time_format");
+		
+		isf_email = wini.get("spamfund", "email");
+		isf_password = wini.get("spamfund", "password");
+		
+		spam_threads = wini.get("other", "threads", int.class);
+
+		if(isf_email == "" || isf_password == "") {
 			askForAccountData(false);
 		}
 		uim.logDbg("signing in using account: '"+isf_email+"'");
 		SpamFundAPI.keepSendingUntilSuccess("signin", null, "signing in");
+		
+		uim.logDbg("configurations loaded successfully");
+	}
+	
+	private static void saveConfigs() {
+
+		uim.logDbg("saving configurations");
+		
+		Wini wini;
+		
+		try {
+			wini = new Wini(new File("config.ini"));
+		} catch (IOException e) {
+			uim.logException(e, false);
+			return;
+		}
+
+		wini.put("nodes", "sync_check_interval", sync_check_interval);
+		wini.put("nodes", "node_list", nodes);
+		
+		wini.put("nodes", "import_from_third_party", import_node_list);
+
+		wini.put("log", "interval", log_interval);
+		wini.put("log", "time_format", time_format);
+		
+		wini.put("spamfund", "email", isf_email == null ? "" : isf_email);
+		wini.put("spamfund", "password", isf_password == null ? "" : isf_password);
+		
+		wini.put("other", "threads", spam_threads);
+		
+		uim.logDbg("configurations saved successfully");
 	}
 }
