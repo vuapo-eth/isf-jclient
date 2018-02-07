@@ -23,7 +23,7 @@ public class Configs {
 	public static boolean import_node_list = false;
 	
 	public static void init() {
-		if(FileManager.exists("config.txt"))
+		if(FileManager.exists("config.ini"))
 			loadConfigs();
 		else
 			generateConfigs();
@@ -31,7 +31,7 @@ public class Configs {
 	
 	private static void generateConfigs() {
 		uim.logInf("=== CONFIGURATION ===");
-		uim.logInf("no config.txt file could be found, therefore one will be created now");
+		uim.logInf("no config.ini file could be found, therefore one will be created now");
 		uim.print("");
 		
 		askForNodeAddress();
@@ -43,13 +43,13 @@ public class Configs {
 	
 	public static void askForAccountData(boolean settingUp) {
 		if(settingUp) {
-			uim.print(UIManager.ANSI_BOLD+"[3/3] What is your ISF signin data?\n");
+			uim.print(UIManager.ANSI_BOLD+"[3/3] Sign in using your ISF account\n");
 			uim.print("If you haven't signed up yet, visit http://iotaspam.com/account/?p=signup to do so.");
 		}
 		
-		if((!settingUp && isf_email == null) || (settingUp && uim.askForBoolean("do you want your email address written into your config.txt so you don't have to type it in everytime you start this program?")))
+		if((!settingUp && isf_email == null) || (settingUp && uim.askForBoolean("do you want your email address written into your config.ini so you don't have to type it in everytime you start this program?")))
 			isf_email = uim.askQuestion(UIQuestion.Q_EMAIL);
-		if(!settingUp || (isf_email != null && uim.askForBoolean("do you want your password written in plain text into your config.txt so you don't have to type it in everytime you start this program?")))
+		if(!settingUp || (isf_email != null && uim.askForBoolean("do you want your password written in plain text into your config.ini so you don't have to type it in everytime you start this program?")))
 			isf_password = uim.askQuestion(UIQuestion.Q_PASSWORD);
 		
 		SpamFundAPI.keepSendingUntilSuccess("signin", null, "signing in");
