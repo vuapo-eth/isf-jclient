@@ -66,8 +66,6 @@ public class Configs {
 										    +"as many threads as you have cores. "+UIManager.ANSI_RESET+UIManager.ANSI_BOLD+"You have "+Runtime.getRuntime().availableProcessors()+" cores.");
 		
 		spam_threads = uim.askForInteger("how many threads do you want to use for spamming?", 1, Runtime.getRuntime().availableProcessors());
-		
-		spam_threads = uim.askForInteger("how many threads do you want to use for spamming?", 1, Runtime.getRuntime().availableProcessors());
 	}
 	
 	private static void askForNodes(boolean firstSetup) {
@@ -121,7 +119,7 @@ public class Configs {
 		
 		String variable = "";
 		while(!variable.equals("exit")) {
-				variable = uim.askQuestion(new UIQuestion() {
+			variable = uim.askQuestion(new UIQuestion() {
 				
 				@Override
 				public boolean isAnswer(String str) {
