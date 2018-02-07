@@ -20,7 +20,7 @@ public class Configs {
 	public static int log_interval = 60,
 			spam_threads = 1,
 			sync_check_interval = 600;
-	public static boolean import_node_list = false;
+	public static boolean third_party_node_list = false;
 	
 	public static void init() {
 		if(FileManager.exists("config.ini"))
@@ -34,11 +34,9 @@ public class Configs {
 		uim.logInf("no config.ini file could be found, therefore one will be created now");
 		uim.print("");
 		
-		askForNodeAddress();
-		askForThreads();
+		askForNodes(true);
+		askForThreads(true);
 		askForAccountData(true);
-		
-		saveConfigs();
 	}
 	
 	public static void askForAccountData(boolean settingUp) {
@@ -51,13 +49,15 @@ public class Configs {
 			isf_email = uim.askQuestion(UIQuestion.Q_EMAIL);
 		if(!settingUp || (isf_email != null && uim.askForBoolean("do you want your password written in plain text into your config.ini so you don't have to type it in everytime you start this program?")))
 			isf_password = uim.askQuestion(UIQuestion.Q_PASSWORD);
+		saveConfigs();
 		
 		SpamFundAPI.keepSendingUntilSuccess("signin", null, "signing in");
 	}
 	
-	private static void askForThreads() {
-		uim.print(UIManager.ANSI_BOLD+"[2/3] How many spamming threads do you want to run?");
-		uim.print("");
+	private static void askForThreads(boolean firstSetup) {
+		if(firstSetup)
+			uim.print(UIManager.ANSI_BOLD+"[2/3] How many spamming threads do you want to run?\n");
+		
 		uim.print(UIManager.ANSI_BRIGHT_BLACK+UIManager.ANSI_BOLD+">>> WHAT IS A THREAD?\n"+UIManager.ANSI_RESET
 				+UIManager.ANSI_BRIGHT_BLACK+"Threads are processes doing calculations isolated from each other. This means you can run\n"
 											+"multiple threads parallelly for better performance.");
@@ -66,12 +66,14 @@ public class Configs {
 										    +"as many threads as you have cores. "+UIManager.ANSI_RESET+UIManager.ANSI_BOLD+"You have "+Runtime.getRuntime().availableProcessors()+" cores.");
 		
 		spam_threads = uim.askForInteger("how many threads do you want to use for spamming?", 1, Runtime.getRuntime().availableProcessors());
+		
+		spam_threads = uim.askForInteger("how many threads do you want to use for spamming?", 1, Runtime.getRuntime().availableProcessors());
 	}
 	
-	private static void askForNodeAddress() {
-		import_node_list = uim.askForBoolean("[1/3] Do you want to use the community node list from 'www.iotanode.host'?");
+	private static void askForNodes(boolean firstSetup) {
+		third_party_node_list = uim.askForBoolean((firstSetup ? "[1/3]" : "")+" do you want to use the community node list from 'www.iotanode.host'?");
 		
-		if(!import_node_list || uim.askForBoolean("do you want to add other nodes to your node list?")) {
+		if(!third_party_node_list || uim.askForBoolean("do you want to add other nodes to your node list?")) {
 			
 			do {
 				String nodeInput = uim.askQuestion(UIQuestion.Q_NODES);
@@ -80,28 +82,19 @@ public class Configs {
 			nodes = NodeManager.getNodeListString();
 		}
 		
-		if(import_node_list) NodeManager.importRemoteNodeList();
+		if(third_party_node_list) NodeManager.importRemoteNodeList();
 	}
 	
 	private static void loadConfigs() {
 		uim.logDbg("loading configurations");
-		
-		Wini wini;
-		
-		try {
-			wini = new Wini(new File("config.ini"));
-		} catch (IOException e) {
-			uim.logWrn("loading configurations failed");
-			uim.logException(e, true);
-			return;
-		}
+		Wini wini = loadWini("loading configurations");
 
 		sync_check_interval = wini.get("nodes", "sync_check_interval", int.class);
 		nodes = wini.get("nodes", "node_list");
 		NodeManager.addToNodeList(nodes);
 		
-		import_node_list = wini.get("nodes", "import_from_third_party", boolean.class);
-		if(import_node_list) NodeManager.importRemoteNodeList();
+		third_party_node_list = wini.get("nodes", "third_party_node_list", boolean.class);
+		if(third_party_node_list) NodeManager.importRemoteNodeList();
 
 		log_interval = wini.get("log", "interval", int.class);
 		time_format = wini.get("log", "time_format");
@@ -114,33 +107,68 @@ public class Configs {
 		if(isf_email == "" || isf_password == "") {
 			askForAccountData(false);
 		}
+		
 		uim.logDbg("signing in using account: '"+isf_email+"'");
 		SpamFundAPI.keepSendingUntilSuccess("signin", null, "signing in");
 		
 		uim.logDbg("configurations loaded successfully");
 	}
 	
-	private static void saveConfigs() {
+	public static void editConfigs() {
 
-		File f = new File("config.ini");
+		uim.logDbg("editing configurations");
+		Wini wini = loadWini("editing configurations");
 		
-		uim.logDbg("saving configurations");
-		
-		Wini wini;
+		String variable = "";
+		while(!variable.equals("exit")) {
+				variable = uim.askQuestion(new UIQuestion() {
+				
+				@Override
+				public boolean isAnswer(String str) {
+					return str.equals("account") || str.equals("nodes") || str.equals("threads") || /*str.equals("log") ||*/ str.equals("exit");
+				}
+				
+			}.setQuestion("what parameter do you want to change? [account/nodes/threads"/*"/log"*/+"|EXIT]")); // TODO
+
+			if(variable.equals("threads")) {
+				askForThreads(false);
+				wini.put("other", "threads", spam_threads);
+			}
+
+			if(variable.equals("account")) {
+				isf_email = null;
+				isf_password = null;
+				SpamFundAPI.keepSendingUntilSuccess("signin", null, "signing in");
+				wini.put("spamfund", "email", isf_email == null ? "" : isf_email);
+				wini.put("spamfund", "password", isf_password == null ? "" : isf_password);
+			}
+
+			if(variable.equals("nodes")) {
+				nodes = "";
+				askForNodes(false);
+				wini.put("nodes", "node_list", nodes);
+				wini.put("nodes", "third_party_node_list", third_party_node_list);
+			}
+		}
 		
 		try {
-			if(!f.exists()) f.createNewFile();
-			wini = new Wini(f);
+			wini.store();
+			uim.logDbg("configurations edited successfully");
 		} catch (IOException e) {
-			uim.logWrn("saving configurations failed");
+			uim.logWrn("editing configurations failed");
 			uim.logException(e, false);
-			return;
 		}
+		
+	}
+	
+	private static void saveConfigs() {
+
+		uim.logDbg("saving configurations");
+		Wini wini = loadWini("saving configurations");
 
 		wini.put("nodes", "sync_check_interval", sync_check_interval);
 		wini.put("nodes", "node_list", nodes);
-		
-		wini.put("nodes", "import_from_third_party", import_node_list);
+		wini.put("nodes", "third_party_node_list", third_party_node_list);
 
 		wini.put("log", "interval", log_interval);
 		wini.put("log", "time_format", time_format);
@@ -152,11 +180,23 @@ public class Configs {
 		
 		try {
 			wini.store();
+			uim.logDbg("configurations saved successfully");
 		} catch (IOException e) {
 			uim.logWrn("saving configurations failed");
 			uim.logException(e, false);
 		}
+	}
+	
+	private static Wini loadWini(String action) {
+		File f = new File("config.ini");
 		
-		uim.logDbg("configurations saved successfully");
+		try {
+			if(!f.exists()) f.createNewFile();
+			return new Wini(f);
+		} catch (IOException e) {
+			uim.logWrn(action + " failed");
+			uim.logException(e, false);
+			return null;
+		}
 	}
 }

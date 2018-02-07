@@ -21,19 +21,22 @@ public class Main {
 				
 				@Override
 				public boolean isAnswer(String str) {
-					return str.equals("start") || str.equals("debug") || str.equals("rewards");
+					return str.equals("start") || str.equals("debug") || str.equals("rewards") || str.equals("config");
 				}
 				
-			}.setQuestion("Please enter a command [start/debug/rewards]"));
+			}.setQuestion("Please enter a command [start/rewards/config/debug]"));
 
 			if(command.equals("debug")) {
 				uim.logInf(UIManager.isDebugEnabled() ? "disabling debugging mode" : "activating debugging mode");
 				UIManager.setDebugEnabled(!UIManager.isDebugEnabled());
 			}
 			
-			if(command.equals("rewards")) {
+			if(command.equals("rewards"))
 				SpamFundAPI.printRewards();
-			}
+			
+			if(command.equals("config"))
+				Configs.editConfigs();
+			
 		} while (!command.equals("start"));
 		
 		uim.printUpdates();
