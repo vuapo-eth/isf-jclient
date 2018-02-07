@@ -44,7 +44,7 @@ public class LogThread extends Thread {
 			
 			if(System.currentTimeMillis()-lastCommandRequest > 120000)  {
 				SpamThread.setCommand(SpamFundAPI.requestCommand());
-				if((counter+=(System.currentTimeMillis()-lastCommandRequest)/60000) > 10) {
+				if(lastCommandRequest > 0 && (counter+=(System.currentTimeMillis()-lastCommandRequest)/60000) > 10) {
 					counter -= 10;
 					double newIotaprice = SpamFundAPI.getIotaPrice();
 					if(newIotaprice > 0) iotaprice = newIotaprice;
