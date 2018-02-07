@@ -45,7 +45,7 @@ public class SpamThread extends Thread {
 			transfers.get(0).setTag("99999999999IOTASPAM9DOT9COM");
 			Input[] inputs = {};
 			nodeManager.sendTransfer(transfers, inputs);
-			totalTxs++;
+			int totalTxsBackup = ++totalTxs;
 			
 			if(command == 1) {
 				nodeManager.getUIM().logWrn("spamming thread paused remotely by ISF website");
@@ -58,10 +58,10 @@ public class SpamThread extends Thread {
 				nodeManager.getUIM().logInf("spamming thread restarted remotely by ISF website");
 			}
 			
-			if(totalTxs % 10 == 0)
+			if(totalTxsBackup % 10 == 0)
 				AddressManager.updateTails(nodeManager);
 				
-			if(totalTxs % 50 == 0)
+			if(totalTxsBackup % (totalTxsBackup <= 200 ? 30 : 50) == 0)
 				AddressManager.getTail().update(nodeManager);
 				
 			if(lastSyncCheck < (int)(System.currentTimeMillis() / 1000) - Configs.sync_check_interval) {

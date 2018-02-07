@@ -8,7 +8,6 @@ public class Configs {
 	private static final UIManager uim = new UIManager("Configs");
 	
 	public static String
-			address = "IOTASPAM9DOT9COM99999999TESTING9TESTING9TESTING9TESTING9TESTING999999999999999999",
 			isf_email = null,
 			isf_password = null,
 			time_format = "HH:mm:ss",

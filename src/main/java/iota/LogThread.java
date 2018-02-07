@@ -39,13 +39,15 @@ public class LogThread extends Thread {
 			uim.logInf("TIME " + UIManager.padLeft(timeString + " | ", 13)
 			+ "SPAM " + UIManager.padLeft((SpamThread.getTotalTxs() + AddressManager.getPreSessionTransactions()) + " txs | ", 14)
 			+ "SPEED " + UIManager.padLeft((timeRunning > 0 ? df.format(60000.0*SpamThread.getTotalTxs()/timeRunning).replaceAll("\\,", ".") + "" : "--") + " txs/min | ", 16)
-			+ "CNFMD " + UIManager.padLeft(AddressManager.getTailsConfirmedTxs(-1) + " txs ("+df.format(AddressManager.getTailsConfirmRate(15))+"%)", 20) + " | "
-			+ "EST. RWRD  " + df.format(miotaPerMonth) + "Mi" + (iotaprice > 0 ? " ($"+df.format(miotaPerMonth*iotaprice)+")": "") + " per month");
+			+ "CNFMD " + UIManager.padLeft(AddressManager.getTailsConfirmedTxs(-1)
+					+ (AddressManager.getTailsConfirmedTxs(-1) < 100 ? "/" + AddressManager.getTailsTotalTxs(-1) : "")
+					+ " txs ("+df.format(AddressManager.getTailsConfirmRate(15))+"%)", 20) + " | "
+			+ "EST. RWRD  " + df.format(miotaPerMonth) + " Mi" + (iotaprice > 0 ? " ($"+df.format(miotaPerMonth*iotaprice)+")": "") + " per month");
 			
 			if(System.currentTimeMillis()-lastCommandRequest > 120000)  {
 				SpamThread.setCommand(SpamFundAPI.requestCommand());
-				if(lastCommandRequest > 0 && (counter+=(System.currentTimeMillis()-lastCommandRequest)/60000) > 10) {
-					counter -= 10;
+				if(lastCommandRequest > 0 && (counter+=(System.currentTimeMillis()-lastCommandRequest)/60000) > 30) {
+					counter -= 30;
 					double newIotaprice = SpamFundAPI.getIotaPrice();
 					if(newIotaprice > 0) iotaprice = newIotaprice;
 				}

@@ -90,7 +90,8 @@ public class AddressManager {
 	}
 	
 	public static double getTailsConfirmRate(int amountOfTails) {
-		return 100.0 * getTailsConfirmedTxs(amountOfTails) / getTailsTotalTxs(amountOfTails);
+		int total = getTailsTotalTxs(amountOfTails), confirmed = getTailsConfirmedTxs(amountOfTails);
+		return total == 0 ? 0 : 100.0 * confirmed / total;
 	}
 	
 	public static int getTailsConfirmedTxs(int amountOfTails) {

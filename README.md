@@ -41,17 +41,22 @@ INSTALLATION
 
 Move to the directory where you want to install the project (e.g. '/opt/'). Then create the executable .jar directly from the GitHub source code:
 
+	# move to the directory where you want to install the spammer
 	$ cd /opt/
-	$ git clone https://github.com/mikrohash/isf-jclient.git
-	$ cd isf-jclient
-
-	$ mvn clean compile
-	$ mvn package
+	
+	# download and unzip
+	$ wget https://github.com/mikrohash/isf-jclient/archive/master.zip
+	$ unzip master.zip
+	
+	# compile it into a .jar file
+	$ cd isf-jclient-master
+	$ mvn clean compile package
 
 STARTING THE JAR
 ----------------
 
-Start the .jar to run the spamming tool:
+Simply start the .jar to run the spamming tool:
 
 	$ java -jar target/isf-jclient-[VERSION].jar
 
+After starting it for the first time, you will be guided through the configuration. You can always stop the spammer using `CTRL+C`.
