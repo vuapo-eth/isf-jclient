@@ -38,10 +38,9 @@ public class Main {
 		
 		uim.printUpdates();
 		
-		Configs.address = SpamFundAPI.requestSpamAddress();
 		NodeManager.shuffleNodeList();
 		NodeManager nodeManager1 = new NodeManager(1);
-		AddressManager.init(Configs.address, nodeManager1);
+		AddressManager.init(nodeManager1);
 		
 		new LogThread().start();
 		

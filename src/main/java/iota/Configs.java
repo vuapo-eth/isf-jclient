@@ -63,7 +63,7 @@ public class Configs {
 	public static void askForAccountData(boolean settingUp) {
 		if(settingUp) {
 			uim.print(UIManager.ANSI_BOLD+"[3/3] What is your ISF signin data?\n");
-			uim.print("If you haven't signed up yet, visit http://iotaspam.com/signup to do so.");
+			uim.print("If you haven't signed up yet, visit http://iotaspam.com/account/?p=signup to do so.");
 		}
 		
 		if((!settingUp && isf_email == null) || (settingUp && uim.askForBoolean("do you want your email address written into your config.txt so you don't have to type it in everytime you start this program?")))

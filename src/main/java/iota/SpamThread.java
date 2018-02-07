@@ -57,10 +57,13 @@ public class SpamThread extends Thread {
 					}
 				nodeManager.getUIM().logInf("spamming thread restarted remotely by ISF website");
 			}
-				
+			
 			if(totalTxs % 10 == 0)
 				AddressManager.updateTails(nodeManager);
-			
+				
+			if(totalTxs % 50 == 0)
+				AddressManager.getTail().update(nodeManager);
+				
 			if(lastSyncCheck < (int)(System.currentTimeMillis() / 1000) - Configs.sync_check_interval) {
 				nodeManager.reconnect();
 				lastSyncCheck = (int)(System.currentTimeMillis() / 1000);

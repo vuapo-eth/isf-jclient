@@ -1,7 +1,7 @@
 ABOUT
 =====
 
-Java Command Line Client for the IOTA Spam Fund (www.iotaspam.com). No official release, work in progress. You can already use it for spamming, but rewards are not implemented yet.
+Java Command Line Client for the IOTA Spam Fund (www.iotaspam.com). Work in progress.
 
 
 INSTALLATION (UBUNTU)

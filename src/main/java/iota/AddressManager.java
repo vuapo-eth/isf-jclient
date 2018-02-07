@@ -13,14 +13,13 @@ public class AddressManager {
 	private static final int MAX_TXS_PER_ADDRESS = 300;
 	private static final int DURATION_UNTIL_CHECKING_TAIL = 1800;
 	
-	private static String addressBase;
+	public static final String ADDRESS_BASE = SpamFundAPI.requestSpamAddress();
 	private static ArrayList<Tail> tails = new ArrayList<Tail>();
 	private static int txCountSinceTailCreation, txCountInit = 0, preSessionTransactions;
 	
-	public static void init(String parAddressBase, NodeManager nodeManager) {
-		addressBase = parAddressBase;
+	public static void init(NodeManager nodeManager) {
 		
-		if(FileManager.exists(DIR+"/"+addressBase+".dat"))
+		if(FileManager.exists(DIR+"/"+ADDRESS_BASE+".dat"))
 			loadAddresses(nodeManager);
 		else {
 			FileManager.mkdirs(DIR);
@@ -37,29 +36,22 @@ public class AddressManager {
 				String lastTailOldString = tail.toString();
 				
 				tail.setTimestamp(0);
-				String[] hashes = nodeManager.findTransactionsByAddress(addressBase + tail.getTrytes());
-				String latestMilestone = nodeManager.getLatestMilestone();
-				boolean[] states = nodeManager.getInclusionStates(hashes, latestMilestone);
-				if(states.length == 0)
-					continue;
+				tail.update(nodeManager);
 				
-				int confirmedTxs = 0;
-				for(boolean state : states)	if(state) confirmedTxs++;
-				
-				tail.setTotalTxs(states.length);
-				tail.setMilestone(latestMilestone);
-				tail.setConfirmedTxs(confirmedTxs);
-				
-				uim.logDbg("checked address '"+addressBase + tail.getTrytes()+"': " + tail.getConfirmedTxs() + "/" + tail.getTotalTxs() + " confirmed txs");
+				uim.logDbg("checked address '"+ADDRESS_BASE + tail.getTrytes()+"': " + tail.getConfirmedTxs() + "/" + tail.getTotalTxs() + " confirmed txs");
 				SpamFundAPI.saveTail(tail);
 				
-				FileManager.write(DIR+"/"+addressBase+".dat", FileManager.readFile(DIR+"/"+addressBase+".dat").replace(lastTailOldString, tail.toString()));
+				FileManager.write(DIR+"/"+ADDRESS_BASE+".dat", FileManager.readFile(DIR+"/"+ADDRESS_BASE+".dat").replace(lastTailOldString, tail.toString()));
 			}
 		}
 	}
 	
+	public static Tail getTail() {
+		return tails.get(tails.size()-1);
+	}
+	
 	public static String getSpamAddress() {
-		String retAddress = addressBase + tails.get(tails.size()-1).getTrytes();
+		String retAddress = ADDRESS_BASE + tails.get(tails.size()-1).getTrytes();
 		if(txCountInit+SpamThread.getTotalTxs()-txCountSinceTailCreation >= MAX_TXS_PER_ADDRESS)
 			createNewAddressTail();
 		return retAddress;
@@ -73,16 +65,16 @@ public class AddressManager {
 		txCountSinceTailCreation = SpamThread.getTotalTxs();
 		txCountInit = 0;
 		String tailTrytes = "";
-		while(tailTrytes.length() < 81 - addressBase.length())
+		while(tailTrytes.length() < 81 - ADDRESS_BASE.length())
 			tailTrytes += (char)((int)'A'+(int)(Math.random()*26));
-		uim.logDbg("changing spam address to "  + addressBase + tailTrytes);
+		uim.logDbg("changing spam address to "  + ADDRESS_BASE + tailTrytes);
 		Tail tail = new Tail(tailTrytes + "|0|0|0|0");
 		tails.add(tail);
-		FileManager.write(DIR+"/"+addressBase+".dat", (FileManager.exists(DIR+"/"+addressBase+".dat") ? FileManager.readFile(DIR+"/"+addressBase+".dat").replace(lastTailOldString, lastTailNewString) + "\n" : "") + tail.toString());
+		FileManager.write(DIR+"/"+ADDRESS_BASE+".dat", (FileManager.exists(DIR+"/"+ADDRESS_BASE+".dat") ? FileManager.readFile(DIR+"/"+ADDRESS_BASE+".dat").replace(lastTailOldString, lastTailNewString) + "\n" : "") + tail.toString());
 	}
 	
 	public static void loadAddresses(NodeManager nodeManager) {
-		String[] tailStrings = FileManager.readFile(DIR+"/"+addressBase + ".dat").split("\n");
+		String[] tailStrings = FileManager.readFile(DIR+"/"+ADDRESS_BASE + ".dat").split("\n");
 		for(String tailString : tailStrings) {
 			if((tailString = tailString.replace(" ", "")).length() > 0)
 				tails.add(new Tail(tailString));

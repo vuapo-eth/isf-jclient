@@ -16,6 +16,22 @@ public class Tail {
 		milestone = par[4];
 	}
 	
+	public void update(NodeManager nodeManager) {
+		String[] hashes = nodeManager.findTransactionsByAddress(AddressManager.ADDRESS_BASE + getTrytes());
+		String latestMilestone = nodeManager.getLatestMilestone();
+		boolean[] states = nodeManager.getInclusionStates(hashes, latestMilestone);
+		
+		if(states.length == 0)
+			return;
+		
+		int confirmedTxs = 0;
+		for(boolean state : states)	if(state) confirmedTxs++;
+		
+		setTotalTxs(states.length);
+		setMilestone(latestMilestone);
+		setConfirmedTxs(confirmedTxs);
+	}
+	
 	public String toString() {
 		return trytes + "|" + UIManager.padLeft(timestamp+"", 10)
 		+ "|" + UIManager.padLeft(confirmedTxs+"", 4)
