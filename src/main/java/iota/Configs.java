@@ -49,7 +49,7 @@ public class Configs {
 		
 		if((!settingUp && isf_email == null) || (settingUp && uim.askForBoolean("do you want your email address written into your config.txt so you don't have to type it in everytime you start this program?")))
 			isf_email = uim.askQuestion(UIQuestion.Q_EMAIL);
-		if(!settingUp || (settingUp && isf_email != null && uim.askForBoolean("do you want your password written in plain text into your config.txt so you don't have to type it in everytime you start this program?")))
+		if(!settingUp || (isf_email != null && uim.askForBoolean("do you want your password written in plain text into your config.txt so you don't have to type it in everytime you start this program?")))
 			isf_password = uim.askQuestion(UIQuestion.Q_PASSWORD);
 		
 		SpamFundAPI.keepSendingUntilSuccess("signin", null, "signing in");
@@ -91,7 +91,8 @@ public class Configs {
 		try {
 			wini = new Wini(new File("config.ini"));
 		} catch (IOException e) {
-			uim.logException(e, false);
+			uim.logWrn("loading configurations failed");
+			uim.logException(e, true);
 			return;
 		}
 
@@ -121,13 +122,17 @@ public class Configs {
 	
 	private static void saveConfigs() {
 
+		File f = new File("config.ini");
+		
 		uim.logDbg("saving configurations");
 		
 		Wini wini;
 		
 		try {
-			wini = new Wini(new File("config.ini"));
+			if(!f.exists()) f.createNewFile();
+			wini = new Wini(f);
 		} catch (IOException e) {
+			uim.logWrn("saving configurations failed");
 			uim.logException(e, false);
 			return;
 		}
