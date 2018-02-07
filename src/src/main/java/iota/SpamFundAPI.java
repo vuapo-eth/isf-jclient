@@ -130,23 +130,14 @@ public class SpamFundAPI {
 	public static double getIotaPrice() {
 		String jsonString = request(CMC_API_IOTA, null);
 		DecimalFormat df = new DecimalFormat("###,##0.00");
-		DecimalFormat dfInt = new DecimalFormat("###,##0");
+		DecimalFormat df2 = new DecimalFormat("###,##0");
 		try {
 			JSONObject obj = new JSONArray(jsonString).getJSONObject(0);
-			
-			double priceUsd = obj.getDouble("price_usd"), change24h = obj.getDouble("percent_change_24h"), mcap = obj.getDouble("market_cap_usd")/1e9;
-			int priceSatoshi = (int) (100000000*obj.getDouble("price_btc"));
-			
-			String s = UIManager.ANSI_BOLD+"IOTA TICKER:     " + UIManager.ANSI_RESET;
-			
-			s += "$"+df.format(priceUsd)+"/Mi ("
-						+(change24h<0?UIManager.ANSI_RED:UIManager.ANSI_GREEN+"+")
-						+ df.format(change24h)+"%"+UIManager.ANSI_RESET+" in 24h)     ";
-			s += dfInt.format(priceSatoshi) + " sat/Mi     ";
-			s += "MCAP: $"+df.format(mcap)+"B (#"+obj.getInt("rank")+")";
-			
-			uim.logInf(s);
-			
+			uim.logInf(UIManager.ANSI_BOLD+"IOTA TICKER:      " + UIManager.ANSI_RESET + "PRICE (USD): $" + df.format(obj.getDouble("price_usd")) + "/Mi "
+					+ "("+(obj.getDouble("percent_change_24h")<0?UIManager.ANSI_RED:UIManager.ANSI_GREEN+"+")
+					+ df.format(obj.getDouble("percent_change_24h"))+"%"+UIManager.ANSI_RESET+" in 24h)" + " | "
+					+ "PRICE (BTC): " + df2.format((int) (100000000*obj.getDouble("price_btc"))) + " sat/Mi | "
+					+ "MCAP: $"+df.format(obj.getDouble("market_cap_usd")/1e9)+"B (#"+obj.getInt("rank")+")");
 			return obj.getDouble("price_usd");
 		} catch (JSONException e) {
 			uim.logDbg(jsonString);

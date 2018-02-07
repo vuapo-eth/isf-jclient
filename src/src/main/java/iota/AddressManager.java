@@ -82,10 +82,8 @@ public class AddressManager {
 			if((tailString = tailString.replace(" ", "")).length() > 0)
 				tails.add(new Tail(tailString));
 		}
-		
-		Tail tail = getTail();
-		tail.update(nodeManager);
-		uim.logDbg("picking up address from last session '"+getSpamAddress()+"' ("+tail.getConfirmedTxs() + "/" + tail.getTotalTxs() + " txs)");
+		txCountInit = nodeManager.findTransactionsByAddress(getSpamAddress()).length;
+		uim.logDbg("picking up spam address from last session '"+getSpamAddress()+"' ("+txCountInit+" txs)");
 		txCountSinceTailCreation = 0;
 		preSessionTransactions = getTailsTotalTxs(999999);
 	}
