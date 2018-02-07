@@ -16,6 +16,7 @@ public class AddressManager {
 	public static final String ADDRESS_BASE = SpamFundAPI.requestSpamAddress();
 	private static ArrayList<Tail> tails = new ArrayList<Tail>();
 	private static int txCountSinceTailCreation, txCountInit = 0, preSessionTransactions;
+	private static long lastTailCreated = 0;
 	
 	public static void init(NodeManager nodeManager) {
 		
@@ -52,8 +53,10 @@ public class AddressManager {
 	
 	public static String getSpamAddress() {
 		String retAddress = ADDRESS_BASE + tails.get(tails.size()-1).getTrytes();
-		if(txCountInit+SpamThread.getTotalTxs()-txCountSinceTailCreation >= MAX_TXS_PER_ADDRESS)
+		if(txCountInit+SpamThread.getTotalTxs()-txCountSinceTailCreation >= MAX_TXS_PER_ADDRESS && System.currentTimeMillis() - lastTailCreated > 10000) {
+			lastTailCreated = System.currentTimeMillis();
 			createNewAddressTail();
+		}
 		return retAddress;
 	}
 	

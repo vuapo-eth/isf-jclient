@@ -20,8 +20,7 @@ public class NodeManager {
 	private static final UIManager uim_static = new UIManager("NodeMngr");
 	private final UIManager uim;
 	
-	private static final int DEPTH = 4;
-	private static final int MIN_WEIGHT_MAGNITUDE = 14;
+	private static final int DEPTH = 4, MIN_WEIGHT_MAGNITUDE = 14, INCONSISTENT_TIPS_PAIR_TOLERANCE = 60;
 	
 	private static ArrayList<String> nodeList = new ArrayList<String>();
 	
@@ -195,14 +194,18 @@ public class NodeManager {
 	public void sendTransfer(List<Transfer> transfers, Input[] inputs) {
 		
 		SendTransferResponse sendTransferResponse = null;
+		int inconsistentTipsPair = 0;
 		
 		while(sendTransferResponse == null) {
 			try {
 				sendTransferResponse = api.sendTransfer("", 2, DEPTH, MIN_WEIGHT_MAGNITUDE, transfers, inputs, AddressManager.getSpamAddress());
 			} catch (Throwable e) {
 				if(e.getMessage() != null && e.getMessage().contains("inconsistent tips pair selected")) {
-					if(Math.random() >= 0.99)
-						uim.logDbg("could not send transfer: 'inconsistent tips pair selected' (because of the frequency, this message shows up only with 1% probability)");
+					if(++inconsistentTipsPair == INCONSISTENT_TIPS_PAIR_TOLERANCE) {
+						inconsistentTipsPair = 0;
+						handleThrowableFromIotaAPI("could not send transfer", new Exception("node '"+buildNodeAddress()+"' selected an inconsistent tips pair "+INCONSISTENT_TIPS_PAIR_TOLERANCE+" times"));
+					}
+					sleep(1000);
 				} else
 					handleThrowableFromIotaAPI("could not send transfer", e);
 				sendTransferResponse = null;

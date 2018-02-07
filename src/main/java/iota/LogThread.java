@@ -22,8 +22,9 @@ public class LogThread extends Thread {
 		while(true) {
 			long timeNow = System.currentTimeMillis();
 			long timeRunning = timeNow-timeStarted;
-			
+
 			DecimalFormat df = new DecimalFormat("##0.00");
+			DecimalFormat df2 = new DecimalFormat("#00.00");
 			
 			int sec = (int)(timeRunning/1000);
 			int min = sec/60;
@@ -40,8 +41,8 @@ public class LogThread extends Thread {
 			+ "SPAM " + UIManager.padLeft((SpamThread.getTotalTxs() + AddressManager.getPreSessionTransactions()) + " txs | ", 14)
 			+ "SPEED " + UIManager.padLeft((timeRunning > 0 ? df.format(60000.0*SpamThread.getTotalTxs()/timeRunning).replaceAll("\\,", ".") + "" : "--") + " txs/min | ", 16)
 			+ "CNFMD " + UIManager.padLeft(AddressManager.getTailsConfirmedTxs(-1)
-					+ (AddressManager.getTailsConfirmedTxs(-1) < 100 ? "/" + AddressManager.getTailsTotalTxs(-1) : "")
-					+ " txs ("+df.format(AddressManager.getTailsConfirmRate(15))+"%)", 20) + " | "
+					+ (AddressManager.getTailsTotalTxs(-1) < 1000 ? UIManager.padRight("/"+AddressManager.getTailsTotalTxs(-1)+"", 4) : "")
+					+ " txs ("+df2.format(AddressManager.getTailsConfirmRate(15))+"%)", 20) + " | "
 			+ "EST. RWRD  " + df.format(miotaPerMonth) + " Mi" + (iotaprice > 0 ? " ($"+df.format(miotaPerMonth*iotaprice)+")": "") + " per month");
 			
 			if(System.currentTimeMillis()-lastCommandRequest > 120000)  {

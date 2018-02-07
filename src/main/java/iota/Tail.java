@@ -52,7 +52,7 @@ public class Tail {
 	}
 
 	public void setConfirmedTxs(int confirmedTxs) {
-		this.confirmedTxs = confirmedTxs;
+		this.totalTxs = Math.max(this.confirmedTxs, confirmedTxs);
 	}
 
 	public int getTotalTxs() {
@@ -60,7 +60,7 @@ public class Tail {
 	}
 
 	public void setTotalTxs(int totalTxs) {
-		this.totalTxs = totalTxs;
+		this.totalTxs = Math.max(this.totalTxs, totalTxs);
 	}
 
 	public String getTrytes() {

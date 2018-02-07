@@ -129,7 +129,7 @@ public class UIManager {
 				return str.equals("yes") || str.equals("no");
 			}
 			
-		}.setQuestion(questionString)).equals("yes");
+		}.setQuestion(questionString + " [yes/no]")).equals("yes");
 	}
 	
 	public int askForInteger(final String questionString, final int min, final int max) {

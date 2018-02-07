@@ -87,7 +87,7 @@ public class Configs {
 	}
 	
 	private static void askForNodeAddress() {
-		import_node_list = uim.askForBoolean("[1/3] Do you want to use the community node list from 'www.iotanode.host'? (type 'no' if you want to use your own node)");
+		import_node_list = uim.askForBoolean("[1/3] Do you want to use the community node list from 'www.iotanode.host'? ('no' if you ONLY want to use your own node list)");
 		
 		if(!import_node_list || uim.askForBoolean("[1/3] Do you have other nodes which you want to add to your node list?")) {
 			uim.print(UIManager.ANSI_BOLD+"[1/3] Which nodes do you want to connect to?");
