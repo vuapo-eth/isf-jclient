@@ -40,7 +40,6 @@ public class AddressManager {
 				tail.update(nodeManager);
 				
 				uim.logDbg("checked address '"+ADDRESS_BASE + tail.getTrytes()+"': " + tail.getConfirmedTxs() + "/" + tail.getTotalTxs() + " confirmed txs");
-				SpamFundAPI.saveTail(tail);
 				
 				FileManager.write(DIR+"/"+ADDRESS_BASE+".dat", FileManager.readFile(DIR+"/"+ADDRESS_BASE+".dat").replace(lastTailOldString, tail.toString()));
 			}
@@ -61,10 +60,11 @@ public class AddressManager {
 	}
 	
 	private static void createNewAddressTail() {
-		Tail nullTail = null;
-		String lastTailOldString = tails.size() == 0 ? "99999999999999999999999999999999" : (nullTail = new Tail(getTail().getTrytes()+"|0|0|0|0")).toString();
-		if(tails.size() > 0)
-			tails.get(tails.size()-1).setTimestamp((int)(System.currentTimeMillis()/1000));
+		String lastTailOldString = tails.size() == 0 ? "99999999999999999999999999999999" : (getTail().getTrytes()+"|0|0|0|0").toString();
+		if(tails.size() > 0) {
+			getTail().setTimestamp((int)(System.currentTimeMillis()/1000));
+			SpamFundAPI.saveTail(getTail());
+		}
 		String lastTailNewString = tails.size() == 0 ? "99999999999999999999999999999999" : getTail().toString();
 		txCountSinceTailCreation = SpamThread.getTotalTxs();
 		txCountInit = 0;

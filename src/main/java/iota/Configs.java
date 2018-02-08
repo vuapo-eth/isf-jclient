@@ -20,8 +20,9 @@ public class Configs {
 			time_format = "HH:mm:ss",
 			nodes = "";
 	public static int log_interval = 60,
-			spam_threads = 1,
-			sync_check_interval = 600;
+			threads_amount = 1,
+			sync_check_interval = 600,
+			threads_priority = 2;
 	public static boolean third_party_node_list = false;
 	
 	public static void init() {
@@ -37,13 +38,12 @@ public class Configs {
 		uim.print("");
 		
 		askForNodes(true);
-		askForThreads(true);
 		askForAccountData(true);
 	}
 	
 	public static void askForAccountData(boolean settingUp) {
 		if(settingUp) {
-			uim.print(UIManager.ANSI_BOLD+"[3/3] Sign in using your ISF account\n");
+			uim.print(UIManager.ANSI_BOLD+"[2/2] Sign in using your ISF account\n");
 			uim.print("If you haven't signed up yet, visit http://iotaspam.com/account/?p=signup to do so.");
 		}
 		
@@ -70,22 +70,13 @@ public class Configs {
 		}
 	}
 	
-	private static void askForThreads(boolean firstSetup) {
-		if(firstSetup)
-			uim.print(UIManager.ANSI_BOLD+"[2/3] How many spamming threads do you want to run?\n");
-		
-		uim.print(UIManager.ANSI_BRIGHT_BLACK+UIManager.ANSI_BOLD+">>> WHAT IS A THREAD?\n"+UIManager.ANSI_RESET
-				+UIManager.ANSI_BRIGHT_BLACK+"Threads are processes doing calculations isolated from each other. This means you can run\n"
-											+"multiple threads parallelly for better performance.");
-		uim.print(UIManager.ANSI_BRIGHT_BLACK+UIManager.ANSI_BOLD+">>> HOW MANY SHOULD I USE?\n"+UIManager.ANSI_RESET
-				+UIManager.ANSI_BRIGHT_BLACK+"Depending on your processor, you have a certain amount of cores. For maximum performance use\n"
-										    +"as many threads as you have cores. "+UIManager.ANSI_RESET+UIManager.ANSI_BOLD+"You have "+Runtime.getRuntime().availableProcessors()+" cores.");
-		
-		spam_threads = uim.askForInteger("how many threads do you want to use for spamming?", 1, Runtime.getRuntime().availableProcessors());
+	private static void askForThreads() {
+		threads_amount = uim.askForInteger("how many threads do you want to use for spamming? (your processor has "+Runtime.getRuntime().availableProcessors()+" cores) ", 1, Runtime.getRuntime().availableProcessors());
+		threads_priority = uim.askForInteger("how much computational resources do you want to give each thread (1 = minimum, 2 = normal, 3 = maximum) ", 1, 3);
 	}
 	
 	private static void askForNodes(boolean firstSetup) {
-		third_party_node_list = uim.askForBoolean((firstSetup ? "[1/3]" : "")+" do you want to use the community node list from 'www.iotanode.host'?");
+		third_party_node_list = uim.askForBoolean((firstSetup ? "[1/2]" : "")+" do you want to use the community node list from 'www.iotanode.host'?");
 		
 		if(!third_party_node_list || uim.askForBoolean("do you want to add other nodes to your node list?")) {
 			
@@ -118,7 +109,8 @@ public class Configs {
 		isf_password = wini.get("spamfund", "password");
 		if(isf_password.length() == 0) isf_password = null;
 		
-		spam_threads = wini.get("other", "threads", int.class);
+		threads_amount = wini.get("threads", "amount", int.class);
+		threads_priority = wini.get("threads", "priority", int.class);
 
 		if(isf_email == "" || isf_password == "") {
 			askForAccountData(false);
@@ -147,8 +139,9 @@ public class Configs {
 			}.setQuestion("what parameter do you want to change? [account/nodes/threads/log | SAVE]")); // TODO
 
 			if(variable.equals("threads")) {
-				askForThreads(false);
-				wini.put("other", "threads", spam_threads);
+				askForThreads();
+				wini.put("threads", "amount", threads_amount);
+				wini.put("threads", "priority", threads_priority);
 			} else if(variable.equals("account")) {
 				isf_email = null;
 				isf_password = null;
@@ -194,8 +187,9 @@ public class Configs {
 		
 		wini.put("spamfund", "email", isf_email == null ? "" : isf_email);
 		wini.put("spamfund", "password", isf_password == null ? "" : isf_password);
-		
-		wini.put("other", "threads", spam_threads);
+
+		wini.put("threads", "amount", threads_amount);
+		wini.put("threads", "priority", threads_priority);
 		
 		try {
 			wini.store();

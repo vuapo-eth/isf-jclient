@@ -57,7 +57,7 @@ public class SpamFundAPI {
 	}
 	
 	public static String requestUpdates() {
-		return request(SPAM_FUND_API_URL + "updates.php", "");
+		return request(SPAM_FUND_API_URL + "updates.php", "build="+Main.getBuild());
 	}
 	
 	public static JSONObject requestBalance() {
@@ -78,18 +78,22 @@ public class SpamFundAPI {
 		DecimalFormat df = new DecimalFormat("###,###,##0");
 		JSONObject objAnswer = keepSendingUntilSuccess("rewards", "", "requesting reward stats");
 		JSONArray tails = objAnswer.getJSONArray("tails");
-		uim.print("Here comes a list of your most recent spam addresses:\n");
-		uim.print("  ID   |  STATE   |  REWARD  |  CNFRMED |  TIME PUBLISHED     |  ADDRESS TAIL / END OF ADDRESS");
-		uim.print("=======|==========|==========|==========|=====================|===============================================================");
-		for(int i = 0; i < tails.length(); i++) {
-			JSONObject obj = tails.getJSONObject(i);
+		if(tails.length() > 0) {
+			uim.print("Here comes a list of your most recent spam addresses:\n");
+			uim.print("  ID   |  STATE   |  REWARD  |  CNFRMED |  TIME PUBLISHED     |  ADDRESS TAIL / END OF ADDRESS");
+			uim.print("=======|==========|==========|==========|=====================|===============================================================");
+			for(int i = 0; i < tails.length(); i++) {
+				JSONObject obj = tails.getJSONObject(i);
 
-			uim.print(UIManager.padLeft("#"+obj.getInt("id"), 6) + " | "
-					+ STATES[obj.getInt("state")+1] + " | "
-					+ UIManager.padLeft(df.format(obj.getInt("balance"))+"", 6) + " i |"
-					+ UIManager.padLeft(obj.getInt("confirmed") + "", 5) + " txs | "
-					+ sdf.format(obj.getLong("created")*1000) + " | "
-					+ obj.getString("trytes"));
+				uim.print(UIManager.padLeft("#"+obj.getInt("id"), 6) + " | "
+						+ STATES[obj.getInt("state")+1] + " | "
+						+ UIManager.padLeft(df.format(obj.getInt("balance"))+"", 6) + " i |"
+						+ UIManager.padLeft(obj.getInt("confirmed") + "", 5) + " txs | "
+						+ sdf.format(obj.getLong("created")*1000) + " | "
+						+ obj.getString("trytes"));
+			}
+		} else {
+			uim.logWrn("You haven't received any rewards yet. Keep spamming!");
 		}
 		uim.print("\nYou have a total account balance of " + df.format(SpamFundAPI.requestBalance().getInt("balance")) + " iotas. You can withdraw here: http://iotaspam.com/withdraw");
 	}

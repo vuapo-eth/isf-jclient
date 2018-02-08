@@ -16,14 +16,25 @@ public class SpamThread extends Thread {
 	
 	public SpamThread(int id, NodeManager nodeManager) {
 		this.id = id;
-		lastSyncCheck = (int)(System.currentTimeMillis() / 1000) + (int)(1.0*id/Configs.spam_threads*Configs.sync_check_interval);
+		lastSyncCheck = (int)(System.currentTimeMillis() / 1000) + (int)(1.0*id/Configs.threads_amount*Configs.sync_check_interval);
 		this.nodeManager = nodeManager;
 	}
 	
 	@Override
 	public void run() {
 		
-		setPriority(MAX_PRIORITY);
+		switch (Configs.threads_priority) {
+		case 1:
+			setPriority(MIN_PRIORITY);
+			break;
+		case 3:
+			setPriority(MAX_PRIORITY);
+			break;
+		case 2:
+		default:
+			setPriority(NORM_PRIORITY);
+			break;
+		}
 		
 		if(nodeManager == null)
 			nodeManager = new NodeManager(id);
