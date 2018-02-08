@@ -207,7 +207,7 @@ public class Configs {
 	}
 	
 	private static Wini loadWini(String action) {
-		File f = new File("config.ini");
+		File f = FileManager.getFile("config.ini");
 		
 		try {
 			if(!f.exists()) f.createNewFile();

@@ -1,5 +1,6 @@
 package iota.ui;
 
+import java.io.File;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
@@ -57,7 +58,7 @@ public class UIManager {
 			String logString = "";
 			for(int i = 0; i < logs.size(); i++) logString += logs.get(i) + "\n";
 			
-			if(!FileManager.exists("logs/")) FileManager.mkdirs("logs/");
+			if(!new File("logs/").exists()) new File("logs/").mkdirs();
 			
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
 			

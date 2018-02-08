@@ -1,11 +1,23 @@
 ABOUT
 =====
 
-Java Command Line Client for the IOTA Spam Fund (www.iotaspam.com). Work in progress.
+Java Command Line Client for the IOTA Spam Fund (www.iotaspam.com). Work in progress, bugs should be expected.
 
 
-INSTALLATION (UBUNTU)
-=====================	
+SIMPLE INSTALLATION
+===================
+
+If you have never heard about Maven, you should stick with this rather simple "installation" (basically a download).
+
+1) download the .jar file from the [releases page](https://github.com/mikrohash/isf-jclient/releases)
+2) put the .jar into a folder which is in another folder, for example 'Desktop/[FOLDER 1]/[FOLDER 2]/' (your jar is in the folder [FOLDER 2], but will create files in [FOLDER 1])
+3) if you haven't already, now is the time to install the JRE (Java Runtime Environment) or JDK (Java Development Kit, which includes the JRE) so you can execute the .jar file in the next step
+4) open your console, `cd` yourself into [FOLDER 2] and run the jar: `java -jar isf-jclient-[VERSION].jar `
+
+MAVEN INSTALLATION (UBUNTU)
+===========================
+
+If you prefer to compile the .jar file yourself and know how to use a terminal, use this guide. The process is similar on other OS.
 
 REQUIREMENTS
 ------------
@@ -50,7 +62,7 @@ Move to the directory where you want to install the project (e.g. '/opt/'). Then
 	
 	# compile it into a .jar file
 	$ cd isf-jclient-master
-	$ mvn clean compile package
+	$ mvn install
 
 STARTING THE JAR
 ----------------

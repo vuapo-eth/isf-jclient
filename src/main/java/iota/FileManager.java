@@ -71,6 +71,7 @@ public class FileManager {
 	}
 	
 	public static String getJarPath() {
+		
 		try {
 			String[] dirs = Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath().split("/");
 			String path = dirs[0] + "/";
