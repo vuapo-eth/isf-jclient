@@ -31,8 +31,15 @@ public abstract class UIQuestion {
 		}
 	}.setQuestion("please enter the API port of the node you want to add [format: 'protocol://host:port', e.g. 'http://node.example.org:14265']");
 	
+	public static final UIQuestion Q_TIME_FORMAT = new UIQuestion() {
+		@Override
+		public boolean isAnswer(String str) {
+			return true;
+		}
+	}.setQuestion("what time format do you wish for the logger [e.g. 'HH:mm:ss' or 'yyyy-MM-dd HH:mm:ss']").setCaseSensitive(true);
 	
-	private boolean hideInput = false;
+	
+	private boolean hideInput = false, caseSensitive = false;
 	private String question;
 	
 	public abstract boolean isAnswer(String str);
@@ -53,5 +60,14 @@ public abstract class UIQuestion {
 
 	public String getQuestion() {
 		return question;
+	}
+
+	public boolean isCaseSensitive() {
+		return caseSensitive;
+	}
+
+	public UIQuestion setCaseSensitive(boolean caseSensitive) {
+		this.caseSensitive = caseSensitive;
+		return this;
 	}
 }

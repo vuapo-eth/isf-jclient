@@ -39,15 +39,6 @@ public class LogThread extends Thread {
 			
 			double miotaPerMonth = (30*24*60*60000.0*SpamThread.getTotalTxs()/timeRunning)*0.000015*AddressManager.getTailsConfirmRate(15)/100;
 			
-			uim.logInf("TIME " + UIManager.padLeft(timeString + " | ", 13)
-			+ "SPAM " + UIManager.padLeft((SpamThread.getTotalTxs() + AddressManager.getPreSessionTransactions()) + " txs | ", 14)
-			+ "SPEED " + UIManager.padLeft((timeRunning > 0 ? df.format(60000.0*SpamThread.getTotalTxs()/timeRunning).replaceAll("\\,", ".") + "" : "--") + " txs/min | ", 16)
-			+ "CNFMD " + UIManager.padLeft(AddressManager.getTailsConfirmedTxs(-1)
-					+ (AddressManager.getTailsTotalTxs(-1) < 1000 ? UIManager.padRight("/"+AddressManager.getTailsTotalTxs(-1)+"", 4) : "")
-					+ " txs ("+df2.format(AddressManager.getTailsConfirmRate(15))+"%)", 20) + " | "
-			+ "BLNCE " + dfInt.format(balance) + "i" + (iotaprice > 0 ? " ($"+df.format(balance/1e6*iotaprice)+")": "") + " | "
-			+ "EST. RWRD  " + df.format(miotaPerMonth) + " Mi" + (iotaprice > 0 ? " ($"+df.format(miotaPerMonth*iotaprice)+")": "") + " per month");
-			
 			if(System.currentTimeMillis()-lastCommandRequest > 120000)  {
 				SpamThread.setCommand(SpamFundAPI.requestCommand());
 				balance = SpamFundAPI.requestBalance();
@@ -58,6 +49,15 @@ public class LogThread extends Thread {
 				}
 				lastCommandRequest = System.currentTimeMillis();
 			}
+			
+			uim.logInf("TIME " + UIManager.padLeft(timeString + " | ", 13)
+			+ "SPAM " + UIManager.padLeft((SpamThread.getTotalTxs() + AddressManager.getPreSessionTransactions()) + " txs | ", 14)
+			+ "SPEED " + UIManager.padLeft((timeRunning > 0 ? df.format(60000.0*SpamThread.getTotalTxs()/timeRunning).replaceAll("\\,", ".") + "" : "--") + " txs/min | ", 16)
+			+ "CNFMD " + UIManager.padLeft(AddressManager.getTailsConfirmedTxs(-1)
+					+ (AddressManager.getTailsTotalTxs(-1) < 1000 ? UIManager.padRight("/"+AddressManager.getTailsTotalTxs(-1)+"", 4) : "")
+					+ " txs ("+df2.format(AddressManager.getTailsConfirmRate(15))+"%)", 20) + " | "
+			+ "BLNCE " + dfInt.format(balance) + "i" + (iotaprice > 0 ? " ($"+df.format(balance/1e6*iotaprice)+")": "") + " | "
+			+ "EST. RWRD  " + df.format(miotaPerMonth) + " Mi" + (iotaprice > 0 ? " ($"+df.format(miotaPerMonth*iotaprice)+")": "") + " per month");
 			
 			try { sleep(Configs.log_interval * 1000); } catch (InterruptedException e) { e.printStackTrace(); }
 		}

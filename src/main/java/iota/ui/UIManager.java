@@ -116,7 +116,8 @@ public class UIManager {
 			if(answer != null)
 				print(ANSI_BOLD + ANSI_YELLOW+(answer.length() == 0 ? "please answer the above question" : "answer '"+answer+"' is not a valid answer"));
 			print("\n"+ANSI_BOLD+question.getQuestion());
-			answer = question.hidesInput() ? readPassword("  > ") : readLine("  > ").toLowerCase();
+			answer = question.hidesInput() ? readPassword("  > ") : readLine("  > ");
+			if(!question.isCaseSensitive()) answer = answer.toLowerCase();
 		} while(!question.isAnswer(answer));
 		return answer;
 	}

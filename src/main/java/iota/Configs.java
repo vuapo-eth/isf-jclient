@@ -2,6 +2,8 @@ package iota;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import org.ini4j.Wini;
 
@@ -139,29 +141,32 @@ public class Configs {
 				
 				@Override
 				public boolean isAnswer(String str) {
-					return str.equals("account") || str.equals("nodes") || str.equals("threads") || /*str.equals("log") ||*/ str.equals("save");
+					return str.equals("account") || str.equals("nodes") || str.equals("threads") || str.equals("log") || str.equals("save");
 				}
 				
-			}.setQuestion("what parameter do you want to change? [account/nodes/threads"/*"/log"*/+" | SAVE]")); // TODO
+			}.setQuestion("what parameter do you want to change? [account/nodes/threads/log | SAVE]")); // TODO
 
 			if(variable.equals("threads")) {
 				askForThreads(false);
 				wini.put("other", "threads", spam_threads);
-			}
-
-			if(variable.equals("account")) {
+			} else if(variable.equals("account")) {
 				isf_email = null;
 				isf_password = null;
 				SpamFundAPI.keepSendingUntilSuccess("signin", null, "signing in");
 				wini.put("spamfund", "email", isf_email == null ? "" : isf_email);
 				wini.put("spamfund", "password", isf_password == null ? "" : isf_password);
-			}
-
-			if(variable.equals("nodes")) {
+			} else if(variable.equals("nodes")) {
 				nodes = "";
 				askForNodes(false);
 				wini.put("nodes", "node_list", nodes);
 				wini.put("nodes", "third_party_node_list", third_party_node_list);
+			} else if(variable.equals("log")) {
+				log_interval = uim.askForInteger("how many seconds do you wish the logger to wait between each info log (we recommended 60)", 1, 3600);
+				wini.put("log", "interval", log_interval);
+				do
+					time_format = uim.askQuestion(UIQuestion.Q_TIME_FORMAT);
+				while(!uim.askForBoolean("do you really want your time to be displayed like that: " + new SimpleDateFormat(time_format).format(new Date()) +"?"));
+				wini.put("log", "time_format", time_format);
 			}
 		}
 		

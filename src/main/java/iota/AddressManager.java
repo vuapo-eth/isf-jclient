@@ -61,10 +61,11 @@ public class AddressManager {
 	}
 	
 	private static void createNewAddressTail() {
-		String lastTailOldString = tails.size() == 0 ? "99999999999999999999999999999999" : tails.get(tails.size()-1).toString();
+		Tail nullTail = new Tail(getTail().getTrytes()+"|0|0|0|0");
+		String lastTailOldString = tails.size() == 0 ? "99999999999999999999999999999999" : nullTail.toString();
 		if(tails.size() > 0)
 			tails.get(tails.size()-1).setTimestamp((int)(System.currentTimeMillis()/1000));
-		String lastTailNewString = tails.size() == 0 ? "99999999999999999999999999999999" : tails.get(tails.size()-1).toString();
+		String lastTailNewString = tails.size() == 0 ? "99999999999999999999999999999999" : getTail().toString();
 		txCountSinceTailCreation = SpamThread.getTotalTxs();
 		txCountInit = 0;
 		String tailTrytes = "";
