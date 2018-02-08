@@ -73,13 +73,19 @@ public class SpamFundAPI {
 	}
 
 	public static void printRewards() {
-		final String[] STATES = {"REJECTED", "PENDING ", "FINISHED"};
+		final String[] STATES = {"REJECTED", "PENDING ", "FINISHED", "DELAYED "};
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 		DecimalFormat df = new DecimalFormat("###,###,##0");
 		JSONObject objAnswer = keepSendingUntilSuccess("rewards", "", "requesting reward stats");
 		JSONArray tails = objAnswer.getJSONArray("tails");
 		if(tails.length() > 0) {
 			uim.print("Here comes a list of your most recent spam addresses:\n");
+
+			uim.logWrn(" > REJECTED < sometimes addresses will be rejected at first, but they will usually be accepted within hours");
+			uim.logWrn(" > FINISHED < addresses have received all rewards");
+			uim.logWrn(" > PENDING  < addresses haven't been checked for confirmations yet, check back in 5 minutes");
+			uim.logWrn(" > DELAYED  < means it is delayed for 30 minutes for best confirmation rates\n");
+			
 			uim.print("  ID   |  STATE   |  REWARD  |  CNFRMED |  TIME PUBLISHED     |  ADDRESS TAIL / END OF ADDRESS");
 			uim.print("=======|==========|==========|==========|=====================|===============================================================");
 			for(int i = 0; i < tails.length(); i++) {
