@@ -100,6 +100,7 @@ public class FileManager {
 			out.write(data);
 			out.close();
 		} catch (IOException e) {
+			uim.logWrn("could not write into file '" + targetFile.getAbsolutePath() + "'");
 			uim.logException(e, true);
 		}
 	}
