@@ -10,8 +10,11 @@ SIMPLE INSTALLATION
 If you have never heard about Maven, you should stick with this rather simple "installation" (basically a download).
 
 1) download the .jar file from the [releases page](https://github.com/mikrohash/isf-jclient/releases)
+
 2) put the .jar into a folder which is in another folder, for example 'Desktop/[FOLDER 1]/[FOLDER 2]/' (your jar is in the folder [FOLDER 2], but will create files in [FOLDER 1])
+
 3) if you haven't already, now is the time to install the JRE (Java Runtime Environment) or JDK (Java Development Kit, which includes the JRE) so you can execute the .jar file in the next step
+
 4) open your console, `cd` yourself into [FOLDER 2] and run the jar: `java -jar isf-jclient-[VERSION].jar `
 
 MAVEN INSTALLATION (UBUNTU)
