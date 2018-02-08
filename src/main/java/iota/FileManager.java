@@ -93,6 +93,9 @@ public class FileManager {
 	    File targetFile = getFile(path);
 	    
 		try {
+		    if(!targetFile.exists())
+		    	targetFile.createNewFile();
+		    
 		    OutputStream out = new FileOutputStream(targetFile);
 			out.write(data);
 			out.close();

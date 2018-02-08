@@ -6,14 +6,14 @@ import java.util.regex.Pattern;
 public abstract class UIQuestion {
 
 	private static final Pattern VALID_EMAIL_ADDRESS_REGEX = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
-	private static final Pattern VALID_NODE_ADDRESS_REGEX = Pattern.compile("^(http|https)(://)[A-Z0-9.]*(:)[0-9]{1,5}$", Pattern.CASE_INSENSITIVE);
+	private static final Pattern VALID_NODE_ADDRESS_REGEX = Pattern.compile("^(http|https)(://)[A-Z0-9.-]*(:)[0-9]{1,5}$", Pattern.CASE_INSENSITIVE);
 	
 	public static final UIQuestion Q_PASSWORD = new UIQuestion() {
 		@Override
 		public boolean isAnswer(String str) {
 			return str.length() > 0;
 		}
-	}.setQuestion("what is your password? (recover it on http://iotaspam.com/account?p=recover)").hideInput(true);
+	}.setQuestion("what is your password? (recover it on http://iotaspam.com/account?p=recover)").setCaseSensitive(true);
 	
 	public static final UIQuestion Q_EMAIL = new UIQuestion() {
 		@Override
