@@ -58,6 +58,6 @@ public class Main {
 	}
 	
 	public static String getBuild() {
-		return "2018-02-06_1";
+		return "2018-02-08_1";
 	}
 }

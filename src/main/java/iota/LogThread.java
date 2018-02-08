@@ -2,6 +2,8 @@ package iota;
 
 import java.text.DecimalFormat;
 
+import org.json.JSONObject;
+
 import iota.ui.UIManager;
 
 public class LogThread extends Thread {
@@ -18,7 +20,9 @@ public class LogThread extends Thread {
 		long timeStarted = System.currentTimeMillis();
 		int counter = 0;
 		double iotaprice = SpamFundAPI.getIotaPrice();
-		int balance = SpamFundAPI.requestBalance();
+		
+		JSONObject objBalance = SpamFundAPI.requestBalance();
+		int balance = objBalance.getInt("balance"), currentReward = objBalance.getInt("reward");
 		
 		while(true) {
 			long timeNow = System.currentTimeMillis();
@@ -37,11 +41,13 @@ public class LogThread extends Thread {
 					+ ":" + (min%60 < 10 ? "0" : "") + min%60
 					+ ":" + (sec%60 < 10 ? "0" : "") + sec%60;
 			
-			double miotaPerMonth = (30*24*60*60000.0*SpamThread.getTotalTxs()/timeRunning)*0.000015*AddressManager.getTailsConfirmRate(15)/100;
+			double miotaPerMonth = (30*24*60*60000.0*SpamThread.getTotalTxs()/timeRunning)*currentReward/1e6*AddressManager.getTailsConfirmRate(15)/100;
 			
 			if(System.currentTimeMillis()-lastCommandRequest > 120000)  {
 				SpamThread.setCommand(SpamFundAPI.requestCommand());
-				balance = SpamFundAPI.requestBalance();
+				objBalance = SpamFundAPI.requestBalance();
+				balance = objBalance.getInt("balance");
+				currentReward = objBalance.getInt("reward");
 				if(lastCommandRequest > 0 && (counter+=(System.currentTimeMillis()-lastCommandRequest)/60000) > 30) {
 					counter -= 30;
 					double newIotaprice = SpamFundAPI.getIotaPrice();

@@ -60,8 +60,8 @@ public class SpamFundAPI {
 		return request(SPAM_FUND_API_URL + "updates.php", "");
 	}
 	
-	public static int requestBalance() {
-		return keepSendingUntilSuccess("balance", "", "requesting reward balance").getInt("balance");
+	public static JSONObject requestBalance() {
+		return keepSendingUntilSuccess("balance", "", "requesting reward balance");
 	}
 	
 	public static int requestCommand() {
@@ -73,19 +73,25 @@ public class SpamFundAPI {
 	}
 
 	public static void printRewards() {
+		final String[] STATES = {"REJECTED", "PENDING ", "FINISHED"};
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+		DecimalFormat df = new DecimalFormat("###,###,##0");
 		JSONObject objAnswer = keepSendingUntilSuccess("rewards", "", "requesting reward stats");
 		JSONArray tails = objAnswer.getJSONArray("tails");
-		uim.logPln("Here is a list of all your rewards:");
-		int sumConfirmed = 0, sumBalance = 0;
+		uim.print("Here comes a list of your most recent spam addresses:\n");
+		uim.print("  ID   |  STATE   |  REWARD  |  CNFRMED |  TIME PUBLISHED     |  ADDRESS TAIL / END OF ADDRESS");
+		uim.print("=======|==========|==========|==========|=====================|===============================================================");
 		for(int i = 0; i < tails.length(); i++) {
 			JSONObject obj = tails.getJSONObject(i);
-			sumConfirmed += obj.getInt("confirmed");
-			sumBalance += obj.getInt("balance");
-			uim.print(UIManager.padLeft(obj.getInt("balance")+"", 8) + "i |" + UIManager.padLeft(obj.getInt("confirmed") + "", 5) + " conf. txs | " + sdf.format(obj.getLong("created")*1000) + " | " + obj.getString("trytes"));
+
+			uim.print(UIManager.padLeft("#"+obj.getInt("id"), 6) + " | "
+					+ STATES[obj.getInt("state")+1] + " | "
+					+ UIManager.padLeft(df.format(obj.getInt("balance"))+"", 6) + " i |"
+					+ UIManager.padLeft(obj.getInt("confirmed") + "", 5) + " txs | "
+					+ sdf.format(obj.getLong("created")*1000) + " | "
+					+ obj.getString("trytes"));
 		}
-		uim.print("==========|================|===============================================================");
-		uim.print(UIManager.padLeft(sumBalance+"", 8) + "i |" + UIManager.padLeft(sumConfirmed + "", 15) + " | total rewards as of now");
+		uim.print("\nYou have a total account balance of " + df.format(SpamFundAPI.requestBalance().getInt("balance")) + " iotas. You can withdraw here: http://iotaspam.com/withdraw");
 	}
 	
 	public static void saveTail(Tail tail) {
