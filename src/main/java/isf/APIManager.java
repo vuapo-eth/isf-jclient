@@ -1,4 +1,4 @@
-package iota;
+package isf;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -15,15 +15,16 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import iota.ui.UIManager;
+import isf.ui.UIManager;
 
-public class SpamFundAPI {
+public class APIManager {
 	
-	private static final UIManager uim = new UIManager("ISF-API");
+	private static final UIManager uim = new UIManager("API-Mngr");
 
 	private static final String SPAM_FUND_API_URL = "http://mikrohash.de/isf/api/"+Main.getVersion()+"/";
-	private static final String NODE_LIST_JSON = "https://iotanode.host/node_table.json";
-	private static final String CMC_API_IOTA = "https://api.coinmarketcap.com/v1/ticker/iota/";
+	private static final String NODE_LIST_IOTANODEHOST = "http://mikrohash.de/isf/api/nodelist/iotanodehost.json";
+	private static final String NODE_LIST_IOTANODESNET = "http://mikrohash.de/isf/api/nodelist/iotanodesnet.json";
+	public static final String CMC_API_IOTA = "https://api.coinmarketcap.com/v1/ticker/iota/";
 
 	public static String request(String urlString, String data) {
 		try {
@@ -51,13 +52,14 @@ public class SpamFundAPI {
 			return response.toString();
 			
 		} catch (IOException e) {
+			uim.logWrn("problem communicating with " + urlString);
 			uim.logException(e, false);
 		}
 		return "";
 	}
 	
-	public static String requestUpdates() {
-		return request(SPAM_FUND_API_URL + "updates.php", "build="+Main.getBuild());
+	public static JSONObject requestUpdates() {
+		return keepSendingUntilSuccess("updates", "", "requesting updates");
 	}
 	
 	public static JSONObject requestBalance() {
@@ -68,26 +70,30 @@ public class SpamFundAPI {
 		return keepSendingUntilSuccess("command", "", "requesting remote command").getInt("command");
 	}
 
-	public static String requestSpamAddress() {
-		return keepSendingUntilSuccess("address", "", "requesting spam address").getString("address");
+	public static JSONObject requestSpamParameters() {
+		return keepSendingUntilSuccess("address", "", "requesting spam address");
+	}
+	
+	public static JSONArray requestRewards() {
+		return keepSendingUntilSuccess("rewards", "", "requesting reward stats").getJSONArray("tails");
 	}
 
 	public static void printRewards() {
 		final String[] STATES = {"REJECTED", "PENDING ", "FINISHED", "DELAYED "};
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 		DecimalFormat df = new DecimalFormat("###,###,##0");
-		JSONObject objAnswer = keepSendingUntilSuccess("rewards", "", "requesting reward stats");
-		JSONArray tails = objAnswer.getJSONArray("tails");
+		
+		JSONArray tails = requestRewards();
 		if(tails.length() > 0) {
 			uim.print("Here comes a list of your most recent spam addresses:\n");
 
-			uim.logWrn(" > REJECTED < sometimes addresses will be rejected at first, but they will usually be accepted within hours");
-			uim.logWrn(" > FINISHED < addresses have received all rewards");
-			uim.logWrn(" > PENDING  < addresses haven't been checked for confirmations yet, check back in 5 minutes");
-			uim.logWrn(" > DELAYED  < means it is delayed for 30 minutes for best confirmation rates\n");
+			uim.print(" > REJECTED < sometimes addresses will be rejected at first, but they will usually be accepted within hours");
+			uim.print(" > FINISHED < addresses have received all rewards");
+			uim.print(" > PENDING  < addresses haven't been checked for confirmations yet, check back in 5 minutes");
+			uim.print(" > DELAYED  < means it is delayed for 30 minutes for best confirmation rates\n");
 			
 			uim.print("  ID   |  STATE   |  REWARD  |  CNFRMED |  TIME PUBLISHED     |  ADDRESS TAIL / END OF ADDRESS");
-			uim.print("=======|==========|==========|==========|=====================|===============================================================");
+			uim.print("=======|==========|==========|==========|=====================|=========================================");
 			for(int i = 0; i < tails.length(); i++) {
 				JSONObject obj = tails.getJSONObject(i);
 
@@ -101,10 +107,10 @@ public class SpamFundAPI {
 		} else {
 			uim.logWrn("You haven't received any rewards yet. Keep spamming!");
 		}
-		uim.print("\nYou have a total account balance of " + df.format(SpamFundAPI.requestBalance().getInt("balance")) + " iotas. You can withdraw here: http://iotaspam.com/withdraw");
+		uim.print("\nYou have a total account balance of " + df.format(APIManager.requestBalance().getInt("balance")) + " iotas. You can withdraw here: http://iotaspam.com/withdraw");
 	}
 	
-	public static void saveTail(Tail tail) {
+	public static void broadcastTail(Tail tail) {
 		keepSendingUntilSuccess("savetail", "trytes="+tail.getTrytes()+"&total="+tail.getTotalTxs()+"&confirmed="+tail.getConfirmedTxs(), "uploading address state");
 	}
 	
@@ -147,34 +153,6 @@ public class SpamFundAPI {
 		} while (true);
 	}
 	
-	public static double getIotaPrice() {
-		String jsonString = request(CMC_API_IOTA, null);
-		DecimalFormat df = new DecimalFormat("###,##0.00");
-		DecimalFormat dfInt = new DecimalFormat("###,##0");
-		try {
-			JSONObject obj = new JSONArray(jsonString).getJSONObject(0);
-			
-			double priceUsd = obj.getDouble("price_usd"), change24h = obj.getDouble("percent_change_24h"), mcap = obj.getDouble("market_cap_usd")/1e9;
-			int priceSatoshi = (int) (100000000*obj.getDouble("price_btc"));
-			
-			String s = UIManager.ANSI_BOLD+"IOTA TICKER:     " + UIManager.ANSI_RESET;
-			
-			s += "$"+df.format(priceUsd)+"/Mi ("
-						+(change24h<0?UIManager.ANSI_RED:UIManager.ANSI_GREEN+"+")
-						+ df.format(change24h)+"%"+UIManager.ANSI_RESET+" in 24h)     ";
-			s += dfInt.format(priceSatoshi) + " sat/Mi     ";
-			s += "MCAP: $"+df.format(mcap)+"B (#"+obj.getInt("rank")+")";
-			
-			uim.logInf(s);
-			
-			return obj.getDouble("price_usd");
-		} catch (JSONException e) {
-			uim.logDbg(jsonString);
-			uim.logException(e, false);
-			return 0;
-		}
-	}
-	
 	private static String md5(byte[] s) {
 		MessageDigest md = null;
 		try {
@@ -185,11 +163,47 @@ public class SpamFundAPI {
 		return bytesToHex(md.digest(s)).toLowerCase();
 	}
 	
-	public static String[] requestNodes() {
-		JSONArray arr = new JSONArray(request(NODE_LIST_JSON, ""));
-		String[] nodes = new String[arr.length()];
-		for(int i = 0; i < arr.length(); i++)
-			nodes[i] = arr.getJSONObject(i).getString("host");
+	public static String[] downloadRemoteNodeLists() {
+		JSONArray arr1 = null, arr2 = null;
+		int tries = 3;
+		
+		while(arr1 == null && tries-- > 0) {
+			try {
+				arr1 = new JSONArray(request(NODE_LIST_IOTANODEHOST, ""));
+			} catch(Throwable t) {
+				if(tries == 0) {
+					uim.logWrn("tried three times to download nodes from " + NODE_LIST_IOTANODEHOST + " without success");
+					uim.logException(t, false);
+				} else {
+					sleep(3000);
+				}
+				arr1 = null;
+			}
+		}
+
+		tries = 3;
+		while(arr2 == null && tries-- > 0) {
+			try {
+				arr2 = new JSONArray(request(NODE_LIST_IOTANODESNET, ""));
+			} catch(Throwable t) {
+				if(tries == 0) {
+					uim.logWrn("tried three times to download nodes from " + NODE_LIST_IOTANODESNET + " without success");
+					uim.logException(t, false);
+				} else {
+					sleep(3000);
+				}
+				arr2 = null;
+			}
+		}
+		
+		int l1 = arr1 == null ? 0 : arr1.length(),
+				l2 = arr2 == null ? 0 : arr2.length();
+		
+		String[] nodes = new String[l1+l2];
+		for(int i = 0; i < l1; i++)
+			nodes[i] = arr1.getJSONObject(i).getString("host");
+		for(int i = 0; i < l2; i++)
+			nodes[arr1.length()+i] = "http://"+arr2.getJSONObject(i).getString("hostname")+":"+arr2.getJSONObject(i).getInt("port");
 		return nodes;
 	}
 	

@@ -1,4 +1,4 @@
-package iota.ui;
+package isf.ui;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -9,13 +9,14 @@ import java.util.Calendar;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import iota.Configs;
-import iota.FileManager;
-import iota.SpamFundAPI;
+import isf.APIManager;
+import isf.Configs;
+import isf.FileManager;
+import isf.P;
 
 public class UIManager {
 	
-	private static boolean debug = false;
+	private static boolean debug = true;
 	
 	public static final String ANSI_RESET = "\u001B[0m";
 	public static final String ANSI_BRIGHT_BLACK = "\u001B[90m";
@@ -29,10 +30,12 @@ public class UIManager {
 	public static final String ANSI_WHITE = "\u001B[37m";
 	public static final String ANSI_BOLD = "\u001B[1m";
 
-	private static final PrintStream ORIGINAL_STREAM = System.out;
+	private static final PrintStream ORIGINAL_STREAM = System.out, ORIGINAL_ERR = System.err;
 	private static final PrintStream DUMMY_STREAM = new PrintStream(new OutputStream(){public void write(int b) { }});
 	private static ArrayList<String> logs = new ArrayList<String>();
 	private static long logFileID = System.currentTimeMillis(), lastLogSaved = System.currentTimeMillis();
+	
+	private static long pauseUntil;
 	
 	private final String identifier;
 	
@@ -40,11 +43,19 @@ public class UIManager {
 		this.identifier = identifier;
 	}
 	
-	public static void init() {
+	static {
 		System.setOut(DUMMY_STREAM);
 	}
 	
 	public void print(String line) {
+		if(pauseUntil > System.currentTimeMillis()) {
+			try {
+				Thread.sleep(pauseUntil - System.currentTimeMillis());
+			} catch (InterruptedException e) {
+				logException(e, true);
+			}
+		}
+		
 		ORIGINAL_STREAM.println(line+ANSI_RESET);
 		logs.add(line+ANSI_RESET);
 		saveLogs();
@@ -61,7 +72,7 @@ public class UIManager {
 			
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
 			
-			FileManager.write("logs/"+sdf.format(logFileID)+".txt", logString.getBytes());
+			FileManager.write("logs/"+sdf.format(logFileID)+".txt", logString);
 			
 			if(logs.size() > 1000) {
 				logFileID = System.currentTimeMillis();
@@ -71,12 +82,13 @@ public class UIManager {
 	}
 	
 	public void logPln(String msg) {
-		print(padRight("["+(new SimpleDateFormat(Configs.time_format)).format(Calendar.getInstance().getTime())+"] [" + identifier + "]", 22) + " " + msg);
+		String timeFormat = Configs.get(P.LOG_TIME_FORMAT);
+		print(padRight("["+(new SimpleDateFormat(timeFormat == null ? "HH:mm:ss" : timeFormat)).format(Calendar.getInstance().getTime())+"] [" + identifier + "]", 22) + " " + msg);
 	}
 	
 	public void logInf(String msg) { logPln("[INF] " + msg); }
-	public void logWrn(String msg) { logPln(ANSI_BOLD+ANSI_YELLOW + "[WRN] " + msg); }
-	public void logErr(String msg) { logPln(ANSI_BOLD+ANSI_RED + "[ERR] " + msg); }
+	public void logWrn(String msg) { logPln(ANSI_BOLD+ANSI_YELLOW + "[WRN] " + msg); pause(1); }
+	public void logErr(String msg) { logPln(ANSI_BOLD+ANSI_RED + "[ERR] " + msg); pause(1); }
 	public void logDbg(String msg) { if(debug) logPln(ANSI_BRIGHT_BLACK + "[DBG] " + msg); }
 
 	public static void setDebugEnabled(boolean enabled) {
@@ -87,13 +99,17 @@ public class UIManager {
 		return debug;
 	}
 	
+	public static void setSystemErrorEnabled(boolean enabled) {
+		System.setErr(enabled ? ORIGINAL_ERR : DUMMY_STREAM);
+	}
+	
 	public void logException(Throwable e, boolean terminate) {
 		logErr(e.getMessage());
 		
 		if(debug) {
-			ORIGINAL_STREAM.println(ANSI_BRIGHT_BLACK);
+			ORIGINAL_ERR.println(ANSI_BRIGHT_BLACK);
 			e.printStackTrace();
-			ORIGINAL_STREAM.println(ANSI_RESET);
+			ORIGINAL_ERR.println(ANSI_RESET);
 		}
 		
 		if(terminate) {
@@ -102,11 +118,19 @@ public class UIManager {
 		}
 	}
 	
+	private static void pause(int s) {
+		pauseUntil = System.currentTimeMillis()+s*1000;
+	}
+	
 	public String readLine(String msg) {
 		print("");
 		String line = System.console().readLine(msg);
 		print("");
 		return line;
+	}
+	
+	public int askQuestionInt(UIQuestionInt question) {
+		return Integer.parseInt(askQuestion(question));
 	}
 	
 	public String askQuestion(UIQuestion question) {
@@ -133,22 +157,6 @@ public class UIManager {
 		}.setQuestion(questionString + " [yes/no]")).equals("yes");
 	}
 	
-	public int askForInteger(final String questionString, final int min, final int max) {
-
-		return Integer.parseInt(askQuestion(new UIQuestion() {
-			@Override
-			public boolean isAnswer(String str) {
-				try {
-					int n = Integer.parseInt(str);
-					return n >= min && n <= max;
-				} catch (NumberFormatException e) {
-					return false;
-				}
-			}
-			
-		}.setQuestion(questionString + " [any integer from " +min+" to "+max+"]")));
-	}
-	
 	public String readPassword(String msg) {
 		print("");
 		String line = new String(System.console().readPassword(msg));
@@ -158,7 +166,7 @@ public class UIManager {
 	
 	public void printUpdates() {
 		logDbg("checking for updates (will appear below if there are any)");
-		JSONObject jsonObj = new JSONObject(SpamFundAPI.requestUpdates());
+		JSONObject jsonObj = APIManager.requestUpdates();
 		int screenIndex = 0;
 		
 		if(jsonObj.getJSONArray("screens").length() == 0)

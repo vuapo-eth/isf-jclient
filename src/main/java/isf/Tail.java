@@ -1,6 +1,6 @@
-package iota;
+package isf;
 
-import iota.ui.UIManager;
+import isf.ui.UIManager;
 
 public class Tail {
 	private int timestamp, confirmedTxs, totalTxs;
@@ -16,10 +16,10 @@ public class Tail {
 		milestone = par[4];
 	}
 	
-	public void update(NodeManager nodeManager) {
-		String[] hashes = nodeManager.findTransactionsByAddress(AddressManager.ADDRESS_BASE + getTrytes());
-		String latestMilestone = nodeManager.getLatestMilestone();
-		boolean[] states = nodeManager.getInclusionStates(hashes, latestMilestone);
+	public void update() {
+		String[] hashes = NodeManager.findTransactionsByAddress(AddressManager.getAddressBase() + getTrytes());
+		String latestMilestone = NodeManager.getLatestMilestone();
+		boolean[] states = NodeManager.getInclusionStates(hashes, latestMilestone);
 		
 		if(states.length == 0)
 			return;

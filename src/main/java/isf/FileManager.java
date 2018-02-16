@@ -1,4 +1,4 @@
-package iota;
+package isf;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -10,9 +10,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
 
-import org.apache.commons.io.IOUtils;
-
-import iota.ui.UIManager;
+import isf.ui.UIManager;
 
 public class FileManager {
 
@@ -30,7 +28,7 @@ public class FileManager {
 		return new File(getJarPath() + relativePath);
 	}
 	
-	public static String readFile(String relativePath) {
+	public static String read(String relativePath) {
 		
 		try {
 			FileInputStream fstream = new FileInputStream(getJarPath() + relativePath);
@@ -40,19 +38,6 @@ public class FileManager {
 			uim.logException(e, true);
 			return "";
 		}
-	}
-	
-	public static String readFileFromResource(String filename) {
-		return readFile(new DataInputStream(FileManager.class.getClassLoader().getResourceAsStream(filename)));
-	}
-	
-	public static byte[] readBytesFromResource(String filename) {
-		try {
-			return IOUtils.toByteArray(new DataInputStream(FileManager.class.getClassLoader().getResourceAsStream(filename)));
-		} catch (IOException e) {
-			uim.logException(e, true);
-		}
-		return null;
 	}
 	
 	private static String readFile(DataInputStream in) {
@@ -80,15 +65,15 @@ public class FileManager {
 			return path;
 		} catch (URISyntaxException e) {
 			uim.logException(e, true);
+			return "./";
 		}
-		return "./";
 	}
 	
 	public static void write(String path, String data) {
 		write(path, data.getBytes());
 	}
 		
-	public static void write(String path, byte[] data) {
+	private static void write(String path, byte[] data) {
 		//uim.logDbg("writing into file '"+path+"'");
 	    File targetFile = getFile(path);
 	    

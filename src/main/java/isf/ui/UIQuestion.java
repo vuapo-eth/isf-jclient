@@ -1,7 +1,9 @@
-package iota.ui;
+package isf.ui;
 
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import isf.Configs;
+import isf.P;
 
 public abstract class UIQuestion {
 
@@ -18,16 +20,15 @@ public abstract class UIQuestion {
 	public static final UIQuestion Q_EMAIL = new UIQuestion() {
 		@Override
 		public boolean isAnswer(String str) {
-			Matcher matcher = VALID_EMAIL_ADDRESS_REGEX .matcher(str);
-	        return matcher.find();
+	        return VALID_EMAIL_ADDRESS_REGEX .matcher(str).find();
 		}
 	}.setQuestion("what is your email address? (sign up on http://iotaspam.com/account?p=signup)");
 	
 	public static final UIQuestion Q_NODES = new UIQuestion() {
 		@Override
 		public boolean isAnswer(String str) {
-			Matcher matcher = VALID_NODE_ADDRESS_REGEX .matcher(str);
-	        return matcher.find();
+			if(str.equals("")) return Configs.getBln(P.NODES_THIRD_PARTY_LIST) || Configs.get(P.NODES_LIST).length()>0;
+	        return VALID_NODE_ADDRESS_REGEX .matcher(str).find();
 		}
 	}.setQuestion("please enter the API port of the node you want to add [format: 'protocol://host:port', e.g. 'http://node.example.org:14265']");
 	
@@ -38,6 +39,12 @@ public abstract class UIQuestion {
 		}
 	}.setQuestion("what time format do you wish for the logger [e.g. 'HH:mm:ss' or 'yyyy-MM-dd HH:mm:ss']").setCaseSensitive(true);
 	
+	public static final UIQuestion Q_START_MENU = new UIQuestion() {
+		@Override
+		public boolean isAnswer(String str) {
+			return str.equals("start") || str.equals("debug") || str.equals("rewards") || str.equals("config");
+		}
+	}.setQuestion("Please enter a command [start/rewards/config/debug]");
 	
 	private boolean hideInput = false, caseSensitive = false;
 	private String question;

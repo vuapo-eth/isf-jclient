@@ -1,4 +1,4 @@
-package iota;
+package isf;
 
 import jota.utils.TrytesConverter;
 
