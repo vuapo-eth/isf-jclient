@@ -56,11 +56,10 @@ public class FileManager {
 	}
 	
 	public static String getJarPath() {
-		
 		try {
 			String[] dirs = Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath().split("/");
 			String path = dirs[0] + "/";
-			for (int i = 1; i < dirs.length-2; i++)
+			for (int i = 1; i < dirs.length-1; i++)
 				path += dirs[i]+"/";
 			return path;
 		} catch (URISyntaxException e) {

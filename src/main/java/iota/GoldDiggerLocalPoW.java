@@ -1,4 +1,4 @@
-package iota.pow;
+package iota;
 
 import cfb.pearldiver.PearlDiver;
 import isf.Configs;
@@ -12,12 +12,22 @@ import jota.utils.Converter;
  */
 public class GoldDiggerLocalPoW implements IotaLocalPoW {
 
+	private static int amountPoW = 0;
+	private static long totalTimePoW = 0;
+	
     PearlDiver pearlDiver = new PearlDiver();
 
     public String performPoW(String trytes, int minWeightMagnitude) {
         int[] trits = Converter.trits(trytes);
-        if (!pearlDiver.search(trits, minWeightMagnitude, Configs.getInt(P.THREADS_AMOUNT)))
+        long timeStarted = System.currentTimeMillis();
+        if (!pearlDiver.search(trits, minWeightMagnitude, Configs.getInt(P.THREADS_AMOUNT_POW)))
             throw new IllegalStateException("GoldDigger search failed");
+        totalTimePoW += System.currentTimeMillis() - timeStarted;
+        amountPoW++;
         return Converter.trytes(trits);
     }
+    
+    public static double getAvgPoWTime() {
+		return amountPoW == 0 ? 0 : 0.001 * totalTimePoW / amountPoW;
+	}
 }

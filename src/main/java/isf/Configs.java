@@ -117,10 +117,12 @@ public class Configs {
 
 			if(variable.equals("threads")) {
 				int amountOfCores = Runtime.getRuntime().availableProcessors();
-				UIQuestionInt.Q_THREADS_AMOUNT.setRange(1, amountOfCores);
-				UIQuestionInt.Q_THREADS_AMOUNT.setQuestion("how many threads do you want to use for spamming? (your processor has "+amountOfCores+" cores) ");
-				set(P.THREADS_AMOUNT, UIM.askQuestionInt(UIQuestionInt.Q_THREADS_AMOUNT));
-				set(P.THREADS_PRIORITY, UIM.askQuestionInt(UIQuestionInt.Q_THREADS_PRIORITY));
+				UIQuestionInt.Q_THREADS_AMOUNT_POW.setRange(1, amountOfCores);
+				UIQuestionInt.Q_THREADS_AMOUNT_POW.setQuestion("how many threads do you want to use for performing Proof-of-Work? (your processor has "+amountOfCores+" cores) ")
+					.setRecommended(Math.max(1, amountOfCores-1));
+				set(P.THREADS_AMOUNT_POW, UIM.askQuestionInt(UIQuestionInt.Q_THREADS_AMOUNT_POW));
+				set(P.THREADS_PRIORITY_POW, UIM.askQuestionInt(UIQuestionInt.Q_THREADS_PRIORITY_POW));
+				set(P.THREADS_GTTARS_SIZE, UIM.askQuestionInt(UIQuestionInt.Q_THREADS_GTTARS_SIZE));
 			} else if(variable.equals("account")) {
 				isf_email = null;
 				isf_password = null;
@@ -151,18 +153,20 @@ public class Configs {
 	}
 	
 	private static void initWini() {
+		int amountOfCores = Runtime.getRuntime().availableProcessors();
 		
 		UIM.logDbg("generating default configuration");
 
 		set(P.GENERAL_VERSION, Main.buildFullVersion());
 		set(P.NODES_SYNC_CHECK_INTERVAL, 600);
-		set(P.NODES_AMOUNT_ROTATION, 1);
+		set(P.NODES_AMOUNT_ROTATION, 10);
 		set(P.NODES_LIST, "");
 		set(P.NODES_THIRD_PARTY_LIST, true);
 		set(P.LOG_INTERVAL, 60);
 		set(P.LOG_TIME_FORMAT, "HH:mm:ss");
-		set(P.THREADS_AMOUNT, 1);
-		set(P.THREADS_PRIORITY, 2);
+		set(P.THREADS_GTTARS_SIZE, 5);
+		set(P.THREADS_AMOUNT_POW, Math.max(1, amountOfCores-1));
+		set(P.THREADS_PRIORITY_POW, 3);
 		set(P.SPAMFUND_EMAIL, "");
 		set(P.SPAMFUND_PASSWORD, "");
 	}

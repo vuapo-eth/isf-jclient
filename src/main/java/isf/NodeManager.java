@@ -5,9 +5,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import cfb.pearldiver.PearlDiverLocalPoW;
 import isf.ui.UIManager;
-import jota.IotaAPI;
+import iota.GoldDiggerLocalPoW;
+import iota.IotaAPI;
 import jota.dto.response.FindTransactionResponse;
 import jota.dto.response.GetInclusionStateResponse;
 import jota.dto.response.GetNodeInfoResponse;
@@ -27,6 +27,8 @@ public class NodeManager {
 	
 	private static ArrayList<String> nodeList = new ArrayList<String>();
 	
+	private static int amountGetTxsToApprove = 0;
+	private static long totalTimeGetTxsToApprove = 0;
 	private static IotaAPI[] apis;
 	private static int[] inconsistentTipsPairs;
 	private static long[] lastSyncCheck;
@@ -92,7 +94,7 @@ public class NodeManager {
 							        .protocol(protocol)
 							        .host(host)
 							        .port(port)
-							        .localPoW(new PearlDiverLocalPoW())
+							        .localPoW(new GoldDiggerLocalPoW())
 							        .build();
 						} catch (IllegalArgumentException e) {
 							uim.logException(e, true);
@@ -255,18 +257,24 @@ public class NodeManager {
 		return transactions;
 	}
 	
-	public static String getTransactionsToApprove() {
+	public static GetTransactionsToApproveResponse getTransactionsToApprove() {
+		rotateAPI();
 		int api = getAPI();
 		GetTransactionsToApproveResponse getTransactionsToApproveResponse = null;
-		
+
+		long timeStarted = System.currentTimeMillis();
 		while(getTransactionsToApproveResponse == null) {
 			try {
+				UIManager.setSystemErrorEnabled(false);
 				getTransactionsToApproveResponse = apis[api].getTransactionsToApprove(DEPTH);
+				UIManager.setSystemErrorEnabled(true);
 			} catch (Throwable e) {
 				api = handleThrowableFromIotaAPI("could not get transactions to approve", e, api);
 			}
 		}
-		return getTransactionsToApproveResponse.getBranchTransaction() + "|" + getTransactionsToApproveResponse.getTrunkTransaction();
+        totalTimeGetTxsToApprove += System.currentTimeMillis()-timeStarted;
+        amountGetTxsToApprove++;
+		return getTransactionsToApproveResponse;
 	}
 	
 	public static void sendTransfer(List<Transfer> transfers, List<Input> inputs) {
@@ -282,20 +290,23 @@ public class NodeManager {
 				sendTransferResponse = apis[api].sendTransfer("", 2, DEPTH, MIN_WEIGHT_MAGNITUDE, transfers, inputs, AddressManager.getSpamAddress(), false, false);
 				UIManager.setSystemErrorEnabled(true);
 			} catch (Throwable e) {
-				if(e.getMessage() == null) {
-					if(++inconsistentTipsPairs[api] >= INCONSISTENT_TIPS_PAIR_TOLERANCE) {
-						inconsistentTipsPairs[api] = 0;
-						connectToNode(null, api, "selected inconsistent tips pair "+INCONSISTENT_TIPS_PAIR_TOLERANCE+" times");
-						rotateAPI();
-						api = getAPI();
-					}
-				} else
 					api = handleThrowableFromIotaAPI("could not send transfer", e, api);
 			}
 		}
 	}
 	
 	private static int handleThrowableFromIotaAPI(String failedAction, Throwable e, int i) {
+		
+		if(e.getMessage() == null || e.getMessage().contains("inconsistent")) {
+			if(++inconsistentTipsPairs[i] >= INCONSISTENT_TIPS_PAIR_TOLERANCE) {
+				inconsistentTipsPairs[i] = 0;
+				connectToNode(null, i, "selected inconsistent tips pair "+INCONSISTENT_TIPS_PAIR_TOLERANCE+" times");
+				rotateAPI();
+				i = getAPI();
+			}
+			return i;
+		}
+			
 		String errorMsg = e.getMessage();
 		
 		if(IllegalAccessError.class.isAssignableFrom(e.getClass()))
@@ -316,7 +327,9 @@ public class NodeManager {
 		GetTransactionsToApproveResponse getTransactionsToApproveResponse = null;
 		
 		try {
+			UIManager.setSystemErrorEnabled(false);
 			getTransactionsToApproveResponse = apis[api].getTransactionsToApprove(DEPTH);
+			UIManager.setSystemErrorEnabled(true);
 		}  catch (Throwable e) {
 			return false;
 		}
@@ -370,7 +383,7 @@ public class NodeManager {
 	}
 	
 	private static String buildNodeAddress(int i) {
-		return (apis[i] == null ? "" : apis[apiIndex].getProtocol() + "://" + apis[apiIndex].getHost() + ":" + apis[apiIndex].getPort());
+		return (apis[i] == null ? "" : apis[i].getProtocol() + "://" + apis[i].getHost() + ":" + apis[i].getPort());
 	}
 	
 	private static void sleep(int ms) {
@@ -383,5 +396,9 @@ public class NodeManager {
 	
 	public static UIManager getUIM() {
 		return uim;
+	}
+    
+    public static double getAvgTxsToApproveTime() {
+		return amountGetTxsToApprove == 0 ? 0 : 0.001 * totalTimeGetTxsToApprove / amountGetTxsToApprove;
 	}
 }

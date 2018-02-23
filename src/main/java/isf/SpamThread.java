@@ -10,34 +10,33 @@ public class SpamThread extends Thread {
 
 	private static int totalTxs = 0;
 	
-	private static boolean paused = true;
+	private static boolean paused = false;
 	private static String tag = "IOTASPAM9DOT9COM99999999999";
+	private static SpamThread spamThread;
 	
 	@Override
 	public void run() {
+		
+		spamThread = this;
 		
 		while(true) {
 			sendTransfer();
 			int totalTxsBackup = ++totalTxs;
 			
 			if(paused) {
-				NodeManager.getUIM().logWrn("spamming thread paused remotely by ISF website");
-				while(paused)
+				synchronized (spamThread) {
 					try {
-						sleep(5000);
+						spamThread.wait();
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-				NodeManager.getUIM().logInf("spamming thread restarted remotely by ISF website");
+				}
 			}
-			
-			if(totalTxsBackup % 10 == 0)
-				AddressManager.updateTails();
 				
 			if(totalTxsBackup % (totalTxsBackup <= 200 ? 30 : 50) == 0)
 				AddressManager.getTail().update();
 			
-			if(totalTxsBackup % 30 == 0)
+			if(totalTxsBackup % 10 == 0)
 				AddressManager.updateTails();
 		}
 	}
@@ -60,6 +59,12 @@ public class SpamThread extends Thread {
 
 	public static void setPaused(boolean paused) {
 		SpamThread.paused = paused;
+		
+		if(!paused) {
+			synchronized(spamThread) {
+				spamThread.notify();
+			}
+		}
 	}
 	
 	public static void setTag(String tag) {

@@ -66,8 +66,8 @@ public class APIManager {
 		return keepSendingUntilSuccess("balance", "", "requesting reward balance");
 	}
 	
-	public static int requestCommand() {
-		return keepSendingUntilSuccess("command", "", "requesting remote command").getInt("command");
+	public static JSONObject requestCommand() {
+		return keepSendingUntilSuccess("command", "", "requesting remote command");
 	}
 
 	public static JSONObject requestSpamParameters() {

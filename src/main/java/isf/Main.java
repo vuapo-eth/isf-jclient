@@ -23,7 +23,11 @@ public class Main {
 		NodeManager.init();
 		AddressManager.init();
 		
+		int powThreads = Configs.getInt(P.THREADS_AMOUNT_POW);
+		uim.logDbg("starting " + powThreads + " pow thread"+(powThreads == 1 ? "" : "s")+" at priority " + Configs.getInt(P.THREADS_PRIORITY_POW));
+		
 		new LogThread().start();
+		new GttaThread().start();
 		new SpamThread().start();
 	}
 	

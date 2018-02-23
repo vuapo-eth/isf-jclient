@@ -84,9 +84,23 @@
 	</properties>
 	<build>
 		<plugins>
+			<plugin> <!-- delete target directory after installation -->
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>2.4.1</version>
+				<executions>
+					<execution>
+						<id>auto-clean</id>
+						<phase>install</phase>
+						<goals>
+							<goal>clean</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<configuration>
+		        	<outputDirectory>./</outputDirectory>
 					<appendAssemblyId>false</appendAssemblyId>
 					<archive>
 						<manifest>

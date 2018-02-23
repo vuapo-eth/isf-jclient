@@ -1,4 +1,4 @@
-package iota.pow;
+package iota;
 
 import static jota.pow.JCurl.NUMBER_OF_ROUNDSP81;
 
@@ -137,7 +137,7 @@ public class GoldDigger {
             final int threadIndex = numberOfThreads;
             Thread worker = (new Thread() { public void run() {
 
-            	int threadsPriority = Configs.getInt(P.THREADS_PRIORITY);
+            	int threadsPriority = Configs.getInt(P.THREADS_PRIORITY_POW);
             	setPriority(threadsPriority == 1 ? Thread.MIN_PRIORITY : threadsPriority == 3 ? Thread.MAX_PRIORITY : Thread.NORM_PRIORITY);
             	
                 final long[] midCurlStateCopyLow = new long[CURL_STATE_LENGTH], midCurlStateCopyHigh = new long[CURL_STATE_LENGTH];
