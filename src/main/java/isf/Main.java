@@ -26,7 +26,7 @@ public class Main {
 		int powThreads = Configs.getInt(P.THREADS_AMOUNT_POW);
 		uim.logDbg("starting " + powThreads + " pow thread"+(powThreads == 1 ? "" : "s")+" at priority " + Configs.getInt(P.THREADS_PRIORITY_POW));
 		
-		new LogThread().start();
+		Logger.init();
 		new GttaThread().start();
 		new SpamThread().start();
 	}

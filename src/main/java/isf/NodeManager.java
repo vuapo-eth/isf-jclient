@@ -157,6 +157,11 @@ public class NodeManager {
 	}
 	
 	private static void rotateAPI() {
+		if(availableAPIs < 1) {
+			uim.logDbg("waiting until connection to any iota api is established"); 
+			while(availableAPIs < 1) sleep(1000);
+		}
+		
 		int tries = 0;
 		do {
 			apiIndex = (apiIndex+1)%apis.length;

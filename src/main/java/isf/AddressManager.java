@@ -26,6 +26,9 @@ public class AddressManager {
 			FileManager.mkdirs(DIR);
 			createNewAddressTail();
 		}
+		
+		TimeManager.addTask(new Task(300000, true) { @Override void onCall() { AddressManager.getTail().update(); } });
+		TimeManager.addTask(new Task(60000, true) { @Override void onCall() { AddressManager.updateTails(); } });
 	}
 	
 	public static void setAddressBase(String addressBase) {

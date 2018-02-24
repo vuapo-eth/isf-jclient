@@ -9,54 +9,34 @@ import org.json.JSONObject;
 import iota.GoldDiggerLocalPoW;
 import isf.ui.UIManager;
 
-public class LogThread extends Thread {
+public class Logger {
 	
 	private static final UIManager uim = new UIManager("LogThrd");
 			
-	private double priceUsd = 0;
-	private long timeStarted, timePauseStarted, totalPauses;
-	private int balance = 0, currentReward = 0;
+	private static double priceUsd = 0;
+	private static long timeStarted;
+	private static int balance = 0, currentReward = 0;
 	
-	@Override
-	public void run() {
+	public static void init() {
 
 		timeStarted = System.currentTimeMillis();
-		
 		int logInterval = Configs.getInt(P.LOG_INTERVAL);
-		uim.logDbg("starting log thread, logs will appear in " + logInterval + "s intervals");
+		uim.logDbg("starting logger, logs will appear in " + logInterval + "s intervals");
 		
 		updateBalance();
 		updateIotaTicker();
-		
 		TimeManager.addTask(new Task(1800000, false) { @Override void onCall() { updateIotaTicker(); } });
 		TimeManager.addTask(new Task(120000, false) { @Override void onCall() { updateBalance(); } });
-		TimeManager.addTask(new Task(120000, true) { @Override void onCall() { updateRemoteControl(); } });
 		TimeManager.addTask(new Task(logInterval * 1000, true) { @Override void onCall() { log(); } });
-		TimeManager.addTask(new Task(300000, true) { @Override void onCall() { AddressManager.getTail().update(); } });
-		TimeManager.addTask(new Task(60000, true) { @Override void onCall() { AddressManager.updateTails(); } });
 	}
 	
-	private void updateRemoteControl() {
-		JSONObject obj = APIManager.requestCommand();
-		
-		if(obj.getBoolean("pause") && !SpamThread.isPaused()) {
-			timePauseStarted = System.currentTimeMillis();
-			uim.logWrn("spamming paused remotely by iotaspam.com: " + obj.getString("message"));
-		} else if(!obj.getBoolean("pause") && SpamThread.isPaused()) {
-			totalPauses += System.currentTimeMillis() - timePauseStarted;
-			uim.logWrn("spamming restarted remotely by iotaspam.com");
-		}
-		
-		SpamThread.setPaused(obj.getBoolean("pause")); // TODO 1 -> boolean
-	}
-	
-	private void updateBalance() {
+	private static void updateBalance() {
 		JSONObject objBalance = APIManager.requestBalance();
 		balance = objBalance.getInt("balance");
 		currentReward = objBalance.getInt("reward");
 	}
 	
-	private void log() {
+	private static void log() {
 
 		if(SpamThread.isPaused()) return;
 		
@@ -100,7 +80,7 @@ public class LogThread extends Thread {
 			(GttaThread.gttarsQueueSize() == 0 ? UIManager.ANSI_RED : "")+GttaThread.gttarsQueueSize()+UIManager.ANSI_RESET+"/"+GttaThread.gttarsLimit()+")");
 	}
 
-	private void updateIotaTicker() {
+	private static void updateIotaTicker() {
 		DecimalFormat df = new DecimalFormat("###,##0.00"), dfInt = new DecimalFormat("###,##0");
 		
 		String jsonString = APIManager.request(APIManager.CMC_API_IOTA, null);
@@ -128,23 +108,23 @@ public class LogThread extends Thread {
 		}
 	}
 	
-	public double getConfirmationRate() {
+	private static double getConfirmationRate() {
 		return AddressManager.getTailsConfirmRate(15);
 	}
 	
-	public int getConfirmedSpam() {
+	private static int getConfirmedSpam() {
 		return AddressManager.getTailsConfirmedTxs(-1);
 	}
 	
-	public int getTimeRunning() {
-		return (int) (System.currentTimeMillis() - timeStarted - totalPauses);
+	private static int getTimeRunning() {
+		return (int) (System.currentTimeMillis() - timeStarted - SpamThread.getTotalPauses());
 	}
 	
-	public int getTotalSpam() {
+	private static int getTotalSpam() {
 		return SpamThread.getTotalTxs() + AddressManager.getPreSessionTransactions();
 	}
 	
-	public double getSpamSpeed() {
+	private static double getSpamSpeed() {
 		int timeRunning = getTimeRunning();
 		return timeRunning > 0 ? 60000.0*SpamThread.getTotalTxs()/timeRunning : 0;
 	}
