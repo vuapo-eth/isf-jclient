@@ -14,7 +14,7 @@ public class LogThread extends Thread {
 	private static final UIManager uim = new UIManager("LogThrd");
 			
 	private double priceUsd = 0;
-	private long timeStarted;
+	private long timeStarted, timePauseStarted, totalPauses;
 	private int balance = 0, currentReward = 0;
 	
 	@Override
@@ -25,19 +25,27 @@ public class LogThread extends Thread {
 		int logInterval = Configs.getInt(P.LOG_INTERVAL);
 		uim.logDbg("starting log thread, logs will appear in " + logInterval + "s intervals");
 		
-		TimeManager.addTask(new Task(1800000, true) { @Override void onCall() { updateIotaTicker(); } });
-		TimeManager.addTask(new Task(120000, true) { @Override void onCall() { updateBalance(); } });
+		updateBalance();
+		updateIotaTicker();
+		
+		TimeManager.addTask(new Task(1800000, false) { @Override void onCall() { updateIotaTicker(); } });
+		TimeManager.addTask(new Task(120000, false) { @Override void onCall() { updateBalance(); } });
 		TimeManager.addTask(new Task(120000, true) { @Override void onCall() { updateRemoteControl(); } });
 		TimeManager.addTask(new Task(logInterval * 1000, true) { @Override void onCall() { log(); } });
+		TimeManager.addTask(new Task(300000, true) { @Override void onCall() { AddressManager.getTail().update(); } });
+		TimeManager.addTask(new Task(60000, true) { @Override void onCall() { AddressManager.updateTails(); } });
 	}
 	
 	private void updateRemoteControl() {
 		JSONObject obj = APIManager.requestCommand();
 		
-		if(obj.getBoolean("pause") && !SpamThread.isPaused())
+		if(obj.getBoolean("pause") && !SpamThread.isPaused()) {
+			timePauseStarted = System.currentTimeMillis();
 			uim.logWrn("spamming paused remotely by iotaspam.com: " + obj.getString("message"));
-		else if(!obj.getBoolean("pause") && SpamThread.isPaused())
+		} else if(!obj.getBoolean("pause") && SpamThread.isPaused()) {
+			totalPauses += System.currentTimeMillis() - timePauseStarted;
 			uim.logWrn("spamming restarted remotely by iotaspam.com");
+		}
 		
 		SpamThread.setPaused(obj.getBoolean("pause")); // TODO 1 -> boolean
 	}
@@ -57,7 +65,6 @@ public class LogThread extends Thread {
 
 		DecimalFormat df = new DecimalFormat("##0.00");
 		DecimalFormat df2 = new DecimalFormat("#00.00");
-		DecimalFormat dfInt = new DecimalFormat("###,###,##0");
 		
 		int sec = (int)(timeRunning/1000);
 		int min = sec/60;
@@ -74,13 +81,19 @@ public class LogThread extends Thread {
 		if(SpamThread.isPaused())
 			speed = "> REMOTELY PAUSED < | ";
 		
+		String balanceString;
+		if(balance >= 1e6) balanceString = (int)(balance/1e6) + " Mi";
+		else if(balance >= 1e4) balanceString = (int)(balance/1e3) + " Ki";
+		else balanceString = balance + " i";
+		balanceString = UIManager.padLeft(balanceString, 6);
+		
 		uim.logInf("TIME " + UIManager.padLeft(timeString + " | ", 13)
 		+ "SPAM " + UIManager.padLeft(getTotalSpam()+"", 7) + " txs | "
 		+  speed
 		+ "CNFMD " + UIManager.padLeft(confirmedSpam
 				+ (totalSpam < 1000 ? UIManager.padRight("/"+totalSpam, 4) : "")
 				+ " txs ("+df2.format(getConfirmationRate())+"%)", 20) + " | "
-		+ "BLNCE " + dfInt.format(balance) + "i" + (priceUsd > 0 ? " ($"+df.format(balance/1e6*priceUsd)+")": "") + " | "
+		+ "BLNCE " + balanceString + " ($"+df.format(balance/1e6*priceUsd)+") | "
 		+ "EST. RWRD  " + df.format(miotaPerMonth) + " Mi" + (priceUsd > 0 ? " ($"+df.format(miotaPerMonth*priceUsd)+")": "") + " per month"
 		+ " | NODES " + UIManager.padLeft(NodeManager.getAmountOfAvailableAPIs() + "/" + NodeManager.getAmountOfAPIs() + "[@"+NodeManager.getApiIndex()+"]", 10)
 		+ " | POW/GTTA " + df2.format(GoldDiggerLocalPoW.getAvgPoWTime()) + "s/"+df2.format(NodeManager.getAvgTxsToApproveTime())+"s ("+
@@ -124,7 +137,7 @@ public class LogThread extends Thread {
 	}
 	
 	public int getTimeRunning() {
-		return (int) (System.currentTimeMillis() - timeStarted);
+		return (int) (System.currentTimeMillis() - timeStarted - totalPauses);
 	}
 	
 	public int getTotalSpam() {

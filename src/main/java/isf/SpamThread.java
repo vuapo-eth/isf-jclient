@@ -20,8 +20,6 @@ public class SpamThread extends Thread {
 		spamThread = this;
 		
 		while(true) {
-			sendTransfer();
-			int totalTxsBackup = ++totalTxs;
 			
 			if(paused) {
 				synchronized (spamThread) {
@@ -32,12 +30,9 @@ public class SpamThread extends Thread {
 					}
 				}
 			}
-				
-			if(totalTxsBackup % (totalTxsBackup <= 200 ? 30 : 50) == 0)
-				AddressManager.getTail().update();
 			
-			if(totalTxsBackup % 10 == 0)
-				AddressManager.updateTails();
+			sendTransfer();
+			totalTxs++;
 		}
 	}
 	

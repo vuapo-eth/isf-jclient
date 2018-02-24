@@ -297,7 +297,7 @@ public class NodeManager {
 	
 	private static int handleThrowableFromIotaAPI(String failedAction, Throwable e, int i) {
 		
-		if(e.getMessage() == null || e.getMessage().contains("inconsistent")) {
+		if(e.getMessage().contains("inconsistent")) {
 			if(++inconsistentTipsPairs[i] >= INCONSISTENT_TIPS_PAIR_TOLERANCE) {
 				inconsistentTipsPairs[i] = 0;
 				connectToNode(null, i, "selected inconsistent tips pair "+INCONSISTENT_TIPS_PAIR_TOLERANCE+" times");

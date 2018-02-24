@@ -61,7 +61,7 @@ public class Configs {
 		
 		NodeManager.clearNodes();
 		
-		set(P.NODES_THIRD_PARTY_LIST, UIM.askForBoolean((firstSetup ? "[1/2]" : "")+" do you want to use third party node lists?"));
+		set(P.NODES_THIRD_PARTY_LIST, UIM.askForBoolean((firstSetup ? "[1/2] " : "")+"do you want to use third party node lists?"));
 		
 		if(!getBln(P.NODES_THIRD_PARTY_LIST) || UIM.askForBoolean("do you want to add other nodes to your node list?")) {
 			String nodeInput = null;

@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import isf.GttaThread;
-import isf.NodeManager;
 import jota.dto.response.GetAttachToTangleResponse;
 import jota.dto.response.GetTransactionsToApproveResponse;
 import jota.error.ArgumentException;
@@ -25,9 +24,8 @@ public class IotaAPI extends jota.IotaAPI {
 	@Override
     public List<Transaction> sendTrytes(final String[] trytes, final int depth, final int minWeightMagnitude) throws ArgumentException {
     	
-
         GetTransactionsToApproveResponse txs = GttaThread.getTransactionsToApprove();
-		if(txs == null) txs = NodeManager.getTransactionsToApprove();
+		if(txs == null) txs = getTransactionsToApprove(depth);
         
         final GetAttachToTangleResponse res = attachToTangle(txs.getTrunkTransaction(), txs.getBranchTransaction(), minWeightMagnitude, trytes);
 

@@ -8,54 +8,14 @@
 	<url>http://iotaspam.com</url>
 	<dependencies>
 		<dependency>
-			<groupId>com.github.iotaledger</groupId>
-			<artifactId>iota.lib.java</artifactId>
-			<version>0.9.11-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-		    <groupId>com.squareup.okhttp3</groupId>
-		    <artifactId>logging-interceptor</artifactId>
-		    <version>3.9.1</version>
-		</dependency>
-		<dependency>
-		    <groupId>com.squareup.retrofit2</groupId>
-		    <artifactId>retrofit</artifactId>
-		    <version>2.3.0</version>
-		</dependency>
-		<dependency>
-		    <groupId>org.apache.commons</groupId>
-		    <artifactId>commons-lang3</artifactId>
-		    <version>3.6</version>
-		</dependency>
-		<dependency>
-		    <groupId>com.squareup.retrofit2</groupId>
-		    <artifactId>converter-gson</artifactId>
-		    <version>2.3.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.bouncycastle</groupId>
-			<artifactId>bcprov-jdk14</artifactId>
-			<version>1.58</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.servicemix.bundles</groupId>
-			<artifactId>org.apache.servicemix.bundles.okio</artifactId>
-			<version>1.13.0_1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.lable.rfc3881.auditlogger.adapter</groupId>
-			<artifactId>slf4j</artifactId>
-			<version>1.6</version>
+		<groupId>org.iota</groupId>
+        <artifactId>jota</artifactId>
+        <version>0.9.11-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
 			<version>20171018</version>
-		</dependency>
-		<dependency>
-			<groupId>javax.ws.rs</groupId>
-			<artifactId>jsr311-api</artifactId>
-			<version>1.1.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
