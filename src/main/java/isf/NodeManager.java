@@ -12,18 +12,15 @@ import jota.dto.response.FindTransactionResponse;
 import jota.dto.response.GetInclusionStateResponse;
 import jota.dto.response.GetNodeInfoResponse;
 import jota.dto.response.GetTransactionsToApproveResponse;
-import jota.dto.response.SendTransferResponse;
 import jota.dto.response.StoreTransactionsResponse;
 import jota.error.ArgumentException;
-import jota.model.Input;
 import jota.model.Transaction;
-import jota.model.Transfer;
 
 public class NodeManager {
 
 	private static final UIManager uim = new UIManager("NodeMngr");
 	
-	private static final int DEPTH = 4, MIN_WEIGHT_MAGNITUDE = 14, INCONSISTENT_TIPS_PAIR_TOLERANCE = 20;
+	private static final int DEPTH = 4, INCONSISTENT_TIPS_PAIR_TOLERANCE = 20;
 	
 	private static final Pattern VALID_NODE_ADDRESS_REGEX = Pattern.compile("^(http|https)(://)[A-Z0-9.-]*(:)[0-9]{1,5}$", Pattern.CASE_INSENSITIVE);
 	
@@ -140,6 +137,12 @@ public class NodeManager {
 			}
 		}.start();
 		
+	}
+	
+
+	private static int getRotatedAPI() {
+		rotateAPI();
+		return getAPI();
 	}
 	
 	public static int getApiIndex() {
@@ -265,16 +268,13 @@ public class NodeManager {
 	}
 	
 	public static GetTransactionsToApproveResponse getTransactionsToApprove() {
-		rotateAPI();
-		int api = getAPI();
+		int api = getRotatedAPI();
 		GetTransactionsToApproveResponse getTransactionsToApproveResponse = null;
 
 		long timeStarted = System.currentTimeMillis();
 		while(getTransactionsToApproveResponse == null) {
 			try {
-				UIManager.setSystemErrorEnabled(false);
 				getTransactionsToApproveResponse = apis[api].getTransactionsToApprove(DEPTH);
-				UIManager.setSystemErrorEnabled(true);
 			} catch (Throwable e) {
 				api = handleThrowableFromIotaAPI("could not get transactions to approve", e, api);
 			}
@@ -282,24 +282,6 @@ public class NodeManager {
         totalTimeGetTxsToApprove += System.currentTimeMillis()-timeStarted;
         amountGetTxsToApprove++;
 		return getTransactionsToApproveResponse;
-	}
-	
-	public static void sendTransfer(List<Transfer> transfers, List<Input> inputs) {
-
-		rotateAPI();
-		int api = getAPI();
-		
-		SendTransferResponse sendTransferResponse = null;
-		
-		while(sendTransferResponse == null) {
-			try {
-				UIManager.setSystemErrorEnabled(false);
-				sendTransferResponse = apis[api].sendTransfer("", 2, DEPTH, MIN_WEIGHT_MAGNITUDE, transfers, inputs, AddressManager.getSpamAddress(), false, false);
-				UIManager.setSystemErrorEnabled(true);
-			} catch (Throwable e) {
-					api = handleThrowableFromIotaAPI("could not send transfer", e, api);
-			}
-		}
 	}
 	
 	private static int handleThrowableFromIotaAPI(String failedAction, Throwable e, int i) {
@@ -323,8 +305,7 @@ public class NodeManager {
 			uim.logException(e, false);
 		
 		connectToNode(null, i, errorMsg);
-		rotateAPI();
-		return getAPI();
+		return getRotatedAPI();
 	}
 	
 	public static boolean isNodeSynced(int api) {
@@ -425,14 +406,14 @@ public class NodeManager {
 
 	public static void sendSpam() {
 		
-		int api = getAPI();
+		int api = getRotatedAPI();
 		
 		while(true) {
 			try {
 				apis[api].sendSpam();
 				return;
 			} catch (Throwable e) {
-				api = handleThrowableFromIotaAPI("could not check latest inclusion states", e, api);
+				api = handleThrowableFromIotaAPI("could not send spam transaction", e, api);
 			}
 		}
 	}

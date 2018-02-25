@@ -15,7 +15,6 @@ import jota.error.ArgumentException;
 import jota.model.Input;
 import jota.model.Transfer;
 import jota.pow.ICurl;
-import jota.pow.SpongeFactory;
 
 public class IotaAPI extends jota.IotaAPI {
 	
@@ -35,13 +34,12 @@ public class IotaAPI extends jota.IotaAPI {
         List<String> trytes = prepareTransfers("", SECURITY,  transfers, null, inputs, false);
 
         GetTransactionsToApproveResponse txs = TipPool.getTransactionsToApprove();
-		if(txs == null) txs = NodeManager.getTransactionsToApprove();
+		while(txs == null) txs = NodeManager.getTransactionsToApprove();
         final GetAttachToTangleResponse res = attachToTangle(txs.getTrunkTransaction(), txs.getBranchTransaction(), MIN_WEIGHT_MAGNITUDE, trytes.toArray(new String[trytes.size()]));
         
         TxBroadcaster.queueTrytes(res);
 	}
 	
-
     public static class Builder extends jota.IotaAPI.Builder {
     	
         public jota.IotaAPI.Builder withCustomCurl(ICurl curl) {

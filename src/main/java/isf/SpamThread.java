@@ -15,6 +15,13 @@ public class SpamThread extends Thread {
 	
 	private static final UIManager UIM = new UIManager("SpamThrd");
 	
+	private static final TimeBomb SPAM_BOMB = new TimeBomb("sending spam transaction", 1) {
+		@Override
+		void onCall() {
+			NodeManager.sendSpam();
+		}
+	};
+	
 	@Override
 	public void run() {
 		
@@ -34,8 +41,7 @@ public class SpamThread extends Thread {
 				}
 			}
 			
-			NodeManager.sendSpam();
-			totalTxs++;
+			if(SPAM_BOMB.call(60000)) totalTxs++;
 		}
 	}
 	

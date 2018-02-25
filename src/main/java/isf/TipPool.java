@@ -6,16 +6,23 @@ import java.util.Stack;
 import jota.dto.response.GetTransactionsToApproveResponse;
 
 public class TipPool extends Thread {
-	
+
 	private static Stack<GetTransactionsToApproveResponse> gttars = new Stack<GetTransactionsToApproveResponse>();
 	private static int gttarsLimit;
 	
+	private static final TimeBomb GTTA_BOMB = new TimeBomb("requesting transactions to approve (tips)", 10) {
+		@Override
+		void onCall() {
+			gttars.push(NodeManager.getTransactionsToApprove());
+		}
+	};
+	
 	@Override
 	public void run() {
-		gttarsLimit = Configs.getInt(P.THREADS_GTTARS_SIZE);
+		gttarsLimit = Configs.getInt(P.THREADS_TIP_POOL_SIZE);
 		while(true) {
 			if(gttars.size() < gttarsLimit)
-				gttars.push(NodeManager.getTransactionsToApprove());
+				GTTA_BOMB.call(10);
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {

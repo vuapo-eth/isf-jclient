@@ -5,7 +5,7 @@ public enum P {
 	GENERAL_VERSION("general", "version"),
 	LOG_INTERVAL("log", "interval"),
 	LOG_TIME_FORMAT("log", "time_format"),
-	THREADS_GTTARS_SIZE("threads", "gttars_size"),
+	THREADS_TIP_POOL_SIZE("threads", "tip_pool_size"),
 	THREADS_AMOUNT_POW("threads", "amount_pow"),
 	THREADS_PRIORITY_POW("threads", "priority_pow"),
 	NODES_LIST("nodes", "node_list"),

@@ -28,6 +28,7 @@ public class Logger {
 		TimeManager.addTask(new Task(1800000, false) { @Override void onCall() { updateIotaTicker(); } });
 		TimeManager.addTask(new Task(120000, false) { @Override void onCall() { updateBalance(); } });
 		TimeManager.addTask(new Task(logInterval * 1000, true) { @Override void onCall() { log(); } });
+		TimeManager.addTask(new Task(5 * logInterval * 1000, false) { @Override void onCall() { performanceReport(); } });
 	}
 	
 	private static void updateBalance() {
@@ -75,9 +76,17 @@ public class Logger {
 				+ " txs ("+df2.format(getConfirmationRate())+"%)", 20) + " | "
 		+ "BLNCE " + balanceString + " ($"+df.format(balance/1e6*priceUsd)+") | "
 		+ "EST. RWRD  " + df.format(miotaPerMonth) + " Mi" + (priceUsd > 0 ? " ($"+df.format(miotaPerMonth*priceUsd)+")": "") + " per month"
-		+ " | NODES " + UIManager.padLeft(NodeManager.getAmountOfAvailableAPIs() + "/" + NodeManager.getAmountOfAPIs(), 5) + "[@" + UIManager.padLeft(NodeManager.getApiIndex()+"", 2)+"]"
-		+ " | POW " + df2.format(GoldDiggerLocalPoW.getAvgPoWTime()) + "s | GTTA "+df2.format(NodeManager.getAvgTxsToApproveTime())+"s ("+
-			(TipPool.gttarsQueueSize() == 0 ? UIManager.ANSI_RED : "")+TipPool.gttarsQueueSize()+UIManager.ANSI_RESET+"/"+TipPool.gttarsLimit()+")");
+		+ " | NODES " + UIManager.padLeft(NodeManager.getAmountOfAvailableAPIs() + "/" + NodeManager.getAmountOfAPIs(), 5) + "[@" + UIManager.padLeft(NodeManager.getApiIndex()+"", 2)+"]");
+	}
+	
+	private static void performanceReport() {
+		DecimalFormat df2 = new DecimalFormat("#00.00");
+		double powPercentage = 100.0 * GoldDiggerLocalPoW.getAvgPoWTime() * getSpamSpeed() / 60;
+		uim.logInf(">>> PERFORMANCE REPORT >>>   PoW: " + df2.format(GoldDiggerLocalPoW.getAvgPoWTime()) + "s ("
+				+(powPercentage > 95 ? UIManager.ANSI_GREEN : (powPercentage < 75) ? UIManager.ANSI_RED : "")
+				+df2.format(powPercentage)+"%"+UIManager.ANSI_RESET+")"
+				+ " | GetTips: "+df2.format(NodeManager.getAvgTxsToApproveTime())+"s | TipPool: "+
+			(TipPool.gttarsQueueSize() == 0 ? UIManager.ANSI_RED : "")+TipPool.gttarsQueueSize()+UIManager.ANSI_RESET+"/"+TipPool.gttarsLimit()+"");
 	}
 
 	private static void updateIotaTicker() {

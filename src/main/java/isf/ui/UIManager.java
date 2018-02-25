@@ -45,6 +45,7 @@ public class UIManager {
 	
 	static {
 		System.setOut(DUMMY_STREAM);
+		setSystemErrorEnabled(false);
 	}
 	
 	public void print(String line) {
@@ -108,7 +109,9 @@ public class UIManager {
 		
 		if(debug) {
 			ORIGINAL_ERR.println(ANSI_BRIGHT_BLACK);
+			setSystemErrorEnabled(true);
 			e.printStackTrace();
+			setSystemErrorEnabled(false);
 			ORIGINAL_ERR.println(ANSI_RESET);
 		}
 		

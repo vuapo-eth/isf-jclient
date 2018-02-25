@@ -122,7 +122,7 @@ public class Configs {
 					.setRecommended(Math.max(1, amountOfCores-1));
 				set(P.THREADS_AMOUNT_POW, UIM.askQuestionInt(UIQuestionInt.Q_THREADS_AMOUNT_POW));
 				set(P.THREADS_PRIORITY_POW, UIM.askQuestionInt(UIQuestionInt.Q_THREADS_PRIORITY_POW));
-				set(P.THREADS_GTTARS_SIZE, UIM.askQuestionInt(UIQuestionInt.Q_THREADS_GTTARS_SIZE));
+				set(P.THREADS_TIP_POOL_SIZE, UIM.askQuestionInt(UIQuestionInt.Q_THREADS_GTTARS_SIZE));
 			} else if(variable.equals("account")) {
 				isf_email = null;
 				isf_password = null;
@@ -159,12 +159,12 @@ public class Configs {
 
 		set(P.GENERAL_VERSION, Main.buildFullVersion());
 		set(P.NODES_SYNC_CHECK_INTERVAL, 600);
-		set(P.NODES_AMOUNT_ROTATION, 10);
+		set(P.NODES_AMOUNT_ROTATION, 20);
 		set(P.NODES_LIST, "");
 		set(P.NODES_THIRD_PARTY_LIST, true);
 		set(P.LOG_INTERVAL, 60);
 		set(P.LOG_TIME_FORMAT, "HH:mm:ss");
-		set(P.THREADS_GTTARS_SIZE, 5);
+		set(P.THREADS_TIP_POOL_SIZE, 10);
 		set(P.THREADS_AMOUNT_POW, Math.max(1, amountOfCores-1));
 		set(P.THREADS_PRIORITY_POW, 3);
 		set(P.SPAMFUND_EMAIL, "");

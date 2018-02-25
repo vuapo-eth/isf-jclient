@@ -20,8 +20,9 @@ public class GoldDiggerLocalPoW implements IotaLocalPoW {
     public String performPoW(String trytes, int minWeightMagnitude) {
         int[] trits = Converter.trits(trytes);
         long timeStarted = System.currentTimeMillis();
-        if (!pearlDiver.search(trits, minWeightMagnitude, Configs.getInt(P.THREADS_AMOUNT_POW)))
-            throw new IllegalStateException("GoldDigger search failed");
+        if (!pearlDiver.search(trits, minWeightMagnitude, Configs.getInt(P.THREADS_AMOUNT_POW))) {
+            //throw new IllegalStateException("PoW aborted: took too long");
+        }
         totalTimePoW += System.currentTimeMillis() - timeStarted;
         amountPoW++;
         return Converter.trytes(trits);
