@@ -22,8 +22,7 @@ public class APIManager {
 	private static final UIManager uim = new UIManager("API-Mngr");
 
 	private static final String SPAM_FUND_API_URL = "http://mikrohash.de/isf/api/"+Main.getVersion()+"/";
-	private static final String NODE_LIST_IOTANODEHOST = "http://mikrohash.de/isf/api/nodelist/iotanodehost.json";
-	private static final String NODE_LIST_IOTANODESNET = "http://mikrohash.de/isf/api/nodelist/iotanodesnet.json";
+	private static final String THIRD_PARTY_NODE_LIST = "http://mikrohash.de/isf/api/nodelist/nodelist.json";
 	public static final String CMC_API_IOTA = "https://api.coinmarketcap.com/v1/ticker/iota/";
 
 	public static String request(String urlString, String data) {
@@ -164,46 +163,26 @@ public class APIManager {
 	}
 	
 	public static String[] downloadRemoteNodeLists() {
-		JSONArray arr1 = null, arr2 = null;
+		JSONArray arr = null;
 		int tries = 3;
 		
-		while(arr1 == null && tries-- > 0) {
+		while(arr == null && tries-- > 0) {
 			try {
-				arr1 = new JSONArray(request(NODE_LIST_IOTANODEHOST, ""));
+				arr = new JSONArray(request(THIRD_PARTY_NODE_LIST, ""));
 			} catch(Throwable t) {
 				if(tries == 0) {
-					uim.logWrn("tried three times to download nodes from " + NODE_LIST_IOTANODEHOST + " without success");
+					uim.logWrn("tried three times to download nodes from " + THIRD_PARTY_NODE_LIST + " without success");
 					uim.logException(t, false);
 				} else {
 					sleep(3000);
 				}
-				arr1 = null;
-			}
-		}
-
-		tries = 3;
-		while(arr2 == null && tries-- > 0) {
-			try {
-				arr2 = new JSONArray(request(NODE_LIST_IOTANODESNET, ""));
-			} catch(Throwable t) {
-				if(tries == 0) {
-					uim.logWrn("tried three times to download nodes from " + NODE_LIST_IOTANODESNET + " without success");
-					uim.logException(t, false);
-				} else {
-					sleep(3000);
-				}
-				arr2 = null;
+				arr = null;
 			}
 		}
 		
-		int l1 = arr1 == null ? 0 : arr1.length(),
-				l2 = arr2 == null ? 0 : arr2.length();
-		
-		String[] nodes = new String[l1+l2];
-		for(int i = 0; i < l1; i++)
-			nodes[i] = arr1.getJSONObject(i).getString("host");
-		for(int i = 0; i < l2; i++)
-			nodes[arr1.length()+i] = "http://"+arr2.getJSONObject(i).getString("hostname")+":"+arr2.getJSONObject(i).getInt("port");
+		String[] nodes = new String[arr.length()];
+		for(int i = 0; i < nodes.length; i++)
+			nodes[i] = arr.getString(i);
 		return nodes;
 	}
 	

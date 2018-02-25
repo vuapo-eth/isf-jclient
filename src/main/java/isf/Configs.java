@@ -201,7 +201,7 @@ public class Configs {
 				load();
 			}
 			
-			NodeManager.addToNodeList(get(P.NODES_LIST));
+			NodeManager.addToNodeList(get(P.NODES_LIST).replace(" ", ""));
 			if(getBln(P.NODES_THIRD_PARTY_LIST)) NodeManager.importRemoteNodeList();
 		} catch (IOException e) {
 			UIM.logWrn("loading configuration file failed [maybe the jar is missing permission to write here, try to start it with 'sudo java -jar ...']");

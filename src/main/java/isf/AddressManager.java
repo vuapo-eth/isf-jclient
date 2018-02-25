@@ -74,8 +74,10 @@ public class AddressManager {
 	}
 	
 	public static String getSpamAddress() {
-		String retAddress = addressBase + tails.get(tails.size()-1).getTrytes();
+		String retAddress = addressBase + getTail().getTrytes();
 		if(txCountInit+SpamThread.getTotalTxs()-txCountSinceTailCreation >= MAX_TXS_PER_ADDRESS && System.currentTimeMillis() - lastTailCreated > 10000) {
+			getTail().update();
+			writeTailsIntoFile();
 			lastTailCreated = System.currentTimeMillis();
 			createNewAddressTail();
 		}

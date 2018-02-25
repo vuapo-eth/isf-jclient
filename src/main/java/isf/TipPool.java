@@ -5,7 +5,7 @@ import java.util.Stack;
 
 import jota.dto.response.GetTransactionsToApproveResponse;
 
-public class GttaThread extends Thread {
+public class TipPool extends Thread {
 	
 	private static Stack<GetTransactionsToApproveResponse> gttars = new Stack<GetTransactionsToApproveResponse>();
 	private static int gttarsLimit;

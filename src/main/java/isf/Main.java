@@ -11,7 +11,7 @@ public class Main {
 	
 	public static void main(String[] args) {
 		
-		uim.print("===== Welcome to the Spam Fund Java Client " + Main.buildFullVersion() + " ===");
+		uim.print("\n===== Welcome to the Spam Fund Java Client " + Main.buildFullVersion() + " ===");
 		Configs.loadOrGenerate();
 		
 		mainMenu(args.length > 0 && args[0] != null ? args[0].toLowerCase() : "");
@@ -27,7 +27,8 @@ public class Main {
 		uim.logDbg("starting " + powThreads + " pow thread"+(powThreads == 1 ? "" : "s")+" at priority " + Configs.getInt(P.THREADS_PRIORITY_POW));
 		
 		Logger.init();
-		new GttaThread().start();
+		new TipPool().start();
+		new TxBroadcaster().start();
 		new SpamThread().start();
 	}
 	
@@ -60,7 +61,7 @@ public class Main {
 	}
 	
 	public static String getBuild() {
-		return "4";
+		return "5";
 	}
 	
 	public static String buildFullVersion() {

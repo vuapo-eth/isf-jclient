@@ -13,6 +13,8 @@ import jota.dto.response.GetInclusionStateResponse;
 import jota.dto.response.GetNodeInfoResponse;
 import jota.dto.response.GetTransactionsToApproveResponse;
 import jota.dto.response.SendTransferResponse;
+import jota.dto.response.StoreTransactionsResponse;
+import jota.error.ArgumentException;
 import jota.model.Input;
 import jota.model.Transaction;
 import jota.model.Transfer;
@@ -314,7 +316,7 @@ public class NodeManager {
 			
 		String errorMsg = e.getMessage();
 		
-		if(IllegalAccessError.class.isAssignableFrom(e.getClass()))
+		if(IllegalAccessError.class.isAssignableFrom(e.getClass()) || ArgumentException.class.isAssignableFrom(e.getClass()))
 			errorMsg = failedAction + ": '" +
 				(e.getMessage().contains("\"error\"") ? (e.getMessage().split("\"error\":\"")[1].split("\"")[0] + "'") : e.getMessage());
 		else if (e.getMessage() == null || !e.getMessage().contains("Failed to connect to"))
@@ -405,5 +407,33 @@ public class NodeManager {
     
     public static double getAvgTxsToApproveTime() {
 		return amountGetTxsToApprove == 0 ? 0 : 0.001 * totalTimeGetTxsToApprove / amountGetTxsToApprove;
+	}
+
+	public static void broadcastAndStore(String[] trytes) {
+		
+		int api = getAPI();
+		StoreTransactionsResponse storeTransactionsResponse = null;
+		
+		while(storeTransactionsResponse == null) {
+			try {
+				storeTransactionsResponse = apis[api].broadcastAndStore(trytes);
+			} catch (Throwable e) {
+				api = handleThrowableFromIotaAPI("could not check latest inclusion states", e, api);
+			}
+		}
+	}
+
+	public static void sendSpam() {
+		
+		int api = getAPI();
+		
+		while(true) {
+			try {
+				apis[api].sendSpam();
+				return;
+			} catch (Throwable e) {
+				api = handleThrowableFromIotaAPI("could not check latest inclusion states", e, api);
+			}
+		}
 	}
 }

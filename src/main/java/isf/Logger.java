@@ -11,7 +11,7 @@ import isf.ui.UIManager;
 
 public class Logger {
 	
-	private static final UIManager uim = new UIManager("LogThrd");
+	private static final UIManager uim = new UIManager("Logger");
 			
 	private static double priceUsd = 0;
 	private static long timeStarted;
@@ -75,9 +75,9 @@ public class Logger {
 				+ " txs ("+df2.format(getConfirmationRate())+"%)", 20) + " | "
 		+ "BLNCE " + balanceString + " ($"+df.format(balance/1e6*priceUsd)+") | "
 		+ "EST. RWRD  " + df.format(miotaPerMonth) + " Mi" + (priceUsd > 0 ? " ($"+df.format(miotaPerMonth*priceUsd)+")": "") + " per month"
-		+ " | NODES " + UIManager.padLeft(NodeManager.getAmountOfAvailableAPIs() + "/" + NodeManager.getAmountOfAPIs() + "[@"+NodeManager.getApiIndex()+"]", 10)
-		+ " | POW/GTTA " + df2.format(GoldDiggerLocalPoW.getAvgPoWTime()) + "s/"+df2.format(NodeManager.getAvgTxsToApproveTime())+"s ("+
-			(GttaThread.gttarsQueueSize() == 0 ? UIManager.ANSI_RED : "")+GttaThread.gttarsQueueSize()+UIManager.ANSI_RESET+"/"+GttaThread.gttarsLimit()+")");
+		+ " | NODES " + UIManager.padLeft(NodeManager.getAmountOfAvailableAPIs() + "/" + NodeManager.getAmountOfAPIs(), 5) + "[@" + UIManager.padLeft(NodeManager.getApiIndex()+"", 2)+"]"
+		+ " | POW " + df2.format(GoldDiggerLocalPoW.getAvgPoWTime()) + "s | GTTA "+df2.format(NodeManager.getAvgTxsToApproveTime())+"s ("+
+			(TipPool.gttarsQueueSize() == 0 ? UIManager.ANSI_RED : "")+TipPool.gttarsQueueSize()+UIManager.ANSI_RESET+"/"+TipPool.gttarsLimit()+")");
 	}
 
 	private static void updateIotaTicker() {

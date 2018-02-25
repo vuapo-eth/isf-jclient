@@ -1,53 +1,50 @@
 package iota;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import isf.GttaThread;
+import isf.AddressManager;
+import isf.TipPool;
+import isf.TxBroadcaster;
+import isf.NodeManager;
+import isf.SpamThread;
+import isf.UploadDataManager;
 import jota.dto.response.GetAttachToTangleResponse;
 import jota.dto.response.GetTransactionsToApproveResponse;
 import jota.error.ArgumentException;
-import jota.model.Transaction;
+import jota.model.Input;
+import jota.model.Transfer;
 import jota.pow.ICurl;
 import jota.pow.SpongeFactory;
 
 public class IotaAPI extends jota.IotaAPI {
 	
-    private ICurl customCurl;
+	private static final int SECURITY = 2, MIN_WEIGHT_MAGNITUDE = 14;
 
 	protected IotaAPI(Builder builder) {
 		super(builder);
-        customCurl = builder.customCurl;
 	}
 	
-	@Override
-    public List<Transaction> sendTrytes(final String[] trytes, final int depth, final int minWeightMagnitude) throws ArgumentException {
-    	
-        GetTransactionsToApproveResponse txs = GttaThread.getTransactionsToApprove();
-		if(txs == null) txs = getTransactionsToApprove(depth);
+	public void sendSpam() throws ArgumentException {
+		
+		ArrayList<Transfer> transfers = new ArrayList<Transfer>();
+		String message = UploadDataManager.getNextData();
+		transfers.add(new Transfer(AddressManager.getSpamAddress(), 0, message, SpamThread.getTag()));
+		List<Input> inputs = new ArrayList<Input>();
         
-        final GetAttachToTangleResponse res = attachToTangle(txs.getTrunkTransaction(), txs.getBranchTransaction(), minWeightMagnitude, trytes);
+        List<String> trytes = prepareTransfers("", SECURITY,  transfers, null, inputs, false);
 
-        try {
-            broadcastAndStore(res.getTrytes());
-        } catch (ArgumentException e) {
-            return new ArrayList<>();
-        }
-
-        final List<Transaction> trx = new ArrayList<>();
-
-        for (final String tryte : Arrays.asList(res.getTrytes())) {
-            trx.add(new Transaction(tryte, customCurl.clone()));
-        }
-        return trx;
-    }
+        GetTransactionsToApproveResponse txs = TipPool.getTransactionsToApprove();
+		if(txs == null) txs = NodeManager.getTransactionsToApprove();
+        final GetAttachToTangleResponse res = attachToTangle(txs.getTrunkTransaction(), txs.getBranchTransaction(), MIN_WEIGHT_MAGNITUDE, trytes.toArray(new String[trytes.size()]));
+        
+        TxBroadcaster.queueTrytes(res);
+	}
+	
 
     public static class Builder extends jota.IotaAPI.Builder {
-        private ICurl customCurl = SpongeFactory.create(SpongeFactory.Mode.KERL);
-
+    	
         public jota.IotaAPI.Builder withCustomCurl(ICurl curl) {
-            customCurl = curl;
             return super.withCustomCurl(curl);
         }
 
@@ -55,5 +52,5 @@ public class IotaAPI extends jota.IotaAPI {
             super.build();
             return new IotaAPI(this);
         }
-	}
+    }
 }

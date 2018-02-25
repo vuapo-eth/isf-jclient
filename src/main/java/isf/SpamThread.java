@@ -1,13 +1,8 @@
 package isf;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.json.JSONObject;
 
 import isf.ui.UIManager;
-import jota.model.Input;
-import jota.model.Transfer;
 
 public class SpamThread extends Thread {
 
@@ -39,7 +34,7 @@ public class SpamThread extends Thread {
 				}
 			}
 			
-			sendTransfer();
+			NodeManager.sendSpam();
 			totalTxs++;
 		}
 	}
@@ -59,15 +54,7 @@ public class SpamThread extends Thread {
 			UIM.logWrn("spamming restarted remotely by iotaspam.com");
 		}
 		
-		SpamThread.setPaused(obj.getBoolean("pause")); // TODO 1 -> boolean
-	}
-	
-	private static void sendTransfer() {
-		ArrayList<Transfer> transfers = new ArrayList<Transfer>();
-		String message = UploadDataManager.getNextData();
-		transfers.add(new Transfer(AddressManager.getSpamAddress(), 0, message, tag));
-		List<Input> inputs = new ArrayList<Input>();
-		NodeManager.sendTransfer(transfers, inputs);
+		SpamThread.setPaused(obj.getBoolean("pause"));
 	}
 	
 	protected static int getTotalTxs() {
@@ -86,6 +73,10 @@ public class SpamThread extends Thread {
 				spamThread.notify();
 			}
 		}
+	}
+	
+	public static String getTag() {
+		return tag;
 	}
 	
 	public static void setTag(String tag) {
