@@ -5,7 +5,7 @@ import jota.dto.response.GetAttachToTangleResponse;
 public class TxBroadcaster {
 	
 	public static void queueTrytes(GetAttachToTangleResponse res) {
-		final TimeBomb broadcastBomb = new TimeBomb("broadcasting tips", 1) {
+		final TimeBomb broadcastBomb = new TimeBomb("broadcasting tips", 10) {
 			@Override
 			void onCall() {
 				NodeManager.broadcastAndStore(res.getTrytes());
