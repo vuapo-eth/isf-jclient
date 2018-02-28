@@ -2,3 +2,5 @@
 *.ini
 /addr/
 /logs/
+*.jar
+/bin/
