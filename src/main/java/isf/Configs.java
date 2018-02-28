@@ -35,6 +35,14 @@ public class Configs {
 		loadWini();
 		askForNodes(true);
 		askForAccountData(true);
+		askForColors();
+		saveWini();
+	}
+	
+	private static void askForColors() {
+		UIManager.toggleColors(true);
+		set(P.LOG_COLORS_ENABLED, UIM.askForBoolean(UIManager.ANSI_BLUE+"Does this text appear blue?"));
+		UIManager.toggleColors(getBln(P.LOG_COLORS_ENABLED));
 	}
 	
 	public static void askForAccountData(boolean settingUp) {
@@ -83,8 +91,9 @@ public class Configs {
 	}
 	
 	private static void load() {
+		UIManager.toggleColors(getBln(P.LOG_COLORS_ENABLED));
+		
 		UIM.logDbg("loading configurations");
-
 		
 		isf_email = wini.get("spamfund", "email");
 		if(isf_email.length() == 0) isf_email = null;
@@ -135,6 +144,7 @@ public class Configs {
 				Configs.set(P.LOG_INTERVAL, UIM.askQuestionInt(UIQuestionInt.Q_LOG_INTERVAL));
 				do Configs.set(P.LOG_TIME_FORMAT, UIM.askQuestion(UIQuestion.Q_TIME_FORMAT));
 				while(!UIM.askForBoolean("do you really want your time to be displayed like that: " + new SimpleDateFormat(get(P.LOG_TIME_FORMAT)).format(new Date()) +"?"));
+				askForColors();
 			}
 		}
 		
@@ -162,6 +172,7 @@ public class Configs {
 		set(P.NODES_AMOUNT_ROTATION, 20);
 		set(P.NODES_LIST, "");
 		set(P.NODES_THIRD_PARTY_LIST, true);
+		set(P.LOG_COLORS_ENABLED, true);
 		set(P.LOG_INTERVAL, 60);
 		set(P.LOG_TIME_FORMAT, "HH:mm:ss");
 		set(P.THREADS_TIP_POOL_SIZE, 10);

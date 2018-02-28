@@ -21,10 +21,17 @@ public class TipPool extends Thread {
 	public void run() {
 		gttarsLimit = Configs.getInt(P.THREADS_TIP_POOL_SIZE);
 		while(true) {
-			if(gttars.size() < gttarsLimit)
-				GTTA_BOMB.call(10);
+			for(int i = 0; i < gttarsLimit-gttars.size(); i++) {
+				new Thread() {
+					@Override
+					public void run() {
+						GTTA_BOMB.call(10);
+					}
+				}.start();
+			}
+			
 			try {
-				Thread.sleep(100);
+				Thread.sleep(12000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}

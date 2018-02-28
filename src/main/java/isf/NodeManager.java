@@ -99,11 +99,7 @@ public class NodeManager {
 							uim.logException(e, true);
 						}
 				
-						try {
-							sleep(3000);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
+						NodeManager.sleep(3000);
 						nodeSyncedMsg = isSolidSubtangleUpdated(api);
 						nodeSynced = nodeSyncedMsg == null;
 					}
@@ -119,11 +115,7 @@ public class NodeManager {
 							if(buildNodeAddress(api).equals(nodeList.get(0))) {
 								boolean inconsistentTipsPairsError = nodeSyncedMsg.contains("inconsistent");
 								uim.logWrn("waiting "+(inconsistentTipsPairsError ? 10 : 60)+" seconds for node '"+buildNodeAddress(api)+"' to get back in sync ("+nodeSyncedMsg+")");
-								try {
-									sleep(inconsistentTipsPairsError ? 10000 : 60000);
-								} catch (InterruptedException e) {
-									e.printStackTrace();
-								}
+								NodeManager.sleep(inconsistentTipsPairsError ? 10000 : 60000);
 							}
 							node = nodeList.get(0);
 						} else {
@@ -378,7 +370,7 @@ public class NodeManager {
 		try {
 			Thread.sleep(ms);
 		} catch (InterruptedException e) {
-			uim.logException(e, true);
+			e.printStackTrace();
 		}
 	}
 	

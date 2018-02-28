@@ -53,8 +53,8 @@ public class APIManager {
 		} catch (IOException e) {
 			uim.logWrn("problem communicating with " + urlString);
 			uim.logException(e, false);
+			return null;
 		}
-		return "";
 	}
 	
 	public static JSONObject requestUpdates() {
@@ -128,7 +128,9 @@ public class APIManager {
 			String jsonString = request(SPAM_FUND_API_URL + filename+".php", "email="+Configs.isf_email+"&nonce="+nonce+"&hash="+hash+"&build="+Main.getBuild()+(data.length() > 0 ? "&"+data : ""));
 			String error;
 			int errorId = -1;
-			try {
+			if(jsonString == null) {
+				error = "could not access '" + SPAM_FUND_API_URL + filename+".php', please check your internet connection";
+			} else try {
 				JSONObject obj = new JSONObject(jsonString);
 				if(obj.getBoolean("success")) return obj;
 				error = obj.getString("error");

@@ -3,6 +3,7 @@ package isf;
 public enum P {
 	
 	GENERAL_VERSION("general", "version"),
+	LOG_COLORS_ENABLED("log", "colors_enabled"),
 	LOG_INTERVAL("log", "interval"),
 	LOG_TIME_FORMAT("log", "time_format"),
 	THREADS_TIP_POOL_SIZE("threads", "tip_pool_size"),

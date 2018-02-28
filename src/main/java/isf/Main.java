@@ -28,7 +28,7 @@ public class Main {
 		
 		Logger.init();
 		new TipPool().start();
-		new TxBroadcaster().start();
+		for(int i = 0; i < 10; i++) new TxBroadcaster().start();
 		new SpamThread().start();
 	}
 	
@@ -61,7 +61,7 @@ public class Main {
 	}
 	
 	public static String getBuild() {
-		return "5";
+		return "6";
 	}
 	
 	public static String buildFullVersion() {

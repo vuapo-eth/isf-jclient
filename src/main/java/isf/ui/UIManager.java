@@ -18,17 +18,17 @@ public class UIManager {
 	
 	private static boolean debug = true;
 	
-	public static final String ANSI_RESET = "\u001B[0m";
-	public static final String ANSI_BRIGHT_BLACK = "\u001B[90m";
-	public static final String ANSI_BLACK = "\u001B[30m";
-	public static final String ANSI_RED = "\u001B[31m";
-	public static final String ANSI_GREEN = "\u001B[32m";
-	public static final String ANSI_YELLOW = "\u001B[33m";
-	public static final String ANSI_BLUE = "\u001B[34m";
-	public static final String ANSI_PURPLE = "\u001B[35m";
-	public static final String ANSI_CYAN = "\u001B[36m";
-	public static final String ANSI_WHITE = "\u001B[37m";
-	public static final String ANSI_BOLD = "\u001B[1m";
+	public static String ANSI_RESET = "\u001B[0m";
+	public static String ANSI_BRIGHT_BLACK = "\u001B[90m";
+	public static String ANSI_BLACK = "\u001B[30m";
+	public static String ANSI_RED = "\u001B[31m";
+	public static String ANSI_GREEN = "\u001B[32m";
+	public static String ANSI_YELLOW = "\u001B[33m";
+	public static String ANSI_BLUE = "\u001B[34m";
+	public static String ANSI_PURPLE = "\u001B[35m";
+	public static String ANSI_CYAN = "\u001B[36m";
+	public static String ANSI_WHITE = "\u001B[37m";
+	public static String ANSI_BOLD = "\u001B[1m";
 
 	private static final PrintStream ORIGINAL_STREAM = System.out, ORIGINAL_ERR = System.err;
 	private static final PrintStream DUMMY_STREAM = new PrintStream(new OutputStream(){public void write(int b) { }});
@@ -41,6 +41,20 @@ public class UIManager {
 	
 	public UIManager(String identifier) {
 		this.identifier = identifier;
+	}
+	
+	public static void toggleColors(boolean enabled) {
+		ANSI_RESET = enabled ? "\u001B[0m" : "";
+		ANSI_BRIGHT_BLACK = enabled ? "\u001B[90m" : "";
+		ANSI_BLACK = enabled ? "\u001B[30m" : "";
+		ANSI_RED = enabled ? "\u001B[31m" : "";
+		ANSI_GREEN = enabled ? "\u001B[32m" : "";
+		ANSI_YELLOW = enabled ? "\u001B[33m" : "";
+		ANSI_BLUE = enabled ? "\u001B[34m" : "";
+		ANSI_PURPLE = enabled ? "\u001B[35m" : "";
+		ANSI_CYAN = enabled ? "\u001B[36m" : "";
+		ANSI_WHITE = enabled ? "\u001B[37m" : "";
+		ANSI_BOLD = enabled ? "\u001B[1m" : "";
 	}
 	
 	static {

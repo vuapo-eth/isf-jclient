@@ -16,9 +16,9 @@ If you have never heard about Maven, you should stick with this rather simple "i
 
 # INSTALLATION VIA MAVEN
 
-If you prefer to compile the .jar file yourself and know how to use a terminal, use this guide.
+If you prefer to compile the .jar file yourself and know how to use a terminal, use this guide. Just follow through the steps.
 
-## REQUIREMENTS
+## 1. GET THE REQUIREMENTS (JRE & MAVEN)
 
 Please make sure you have the **JRE** (Java Runtime Environment) and **Maven** installed. Here is how to do that:
 
@@ -54,22 +54,77 @@ Please install the **JRE** from [oracle.com](http://www.oracle.com/technetwork/j
 
 5. to test whether it works, execute `mvn --version` in cmd, this should show you details about the installed version, directory etc.
 
-## CREATING THE JAR FILE
+## 2. INSTALL THE DEPENDENCIES
 
-Move to the directory where you want to install the project (e.g. '/home/'). Then create the executable .jar directly from the GitHub source code:
+Our spammer makes use of the official IOTA java library **JOTA** ([iota.lib.java](https://github.com/iotaledger/iota.lib.java)). You need to install it locally before you can run our spammer. There are several ways to do that:
 
-    # move to the directory where you want to install the spammer
-    $ cd ~
-    
-    # download and unzip
-    $ wget https://github.com/mikrohash/isf-jclient/archive/master.zip
-    $ unzip master.zip
+### METHOD A: DOWNLOAD VIA WGET
 
-    # compile it into a runnable .jar file
-    $ cd isf-jclient-master
-    $ mvn install
+	$ cd ~/somewhere-over-the-rainbow/
+	$ wget https://github.com/iotaledger/iota.lib.java/archive/master.zip
+	$ unzip master.zip
+	$ cd iota.lib.java-master
+	$ mvn install
+	
+### METHOD B: DOWNLOAD VIA GIT
 
-## STARTING THE JAR
+For this you will need the GIT plugin (installation on UBUNTU via: `sudo apt-get install git`)
+
+	$ cd ~/somewhere-over-the-rainbow/
+	$ git clone https://github.com/iotaledger/iota.lib.java
+	$ cd iota.lib.java
+	$ mvn install
+	
+### METHOD C: MANUAL DOWNLOAD
+
+1. go to [github.com/iotaledger/iota.lib.java](https://github.com/iotaledger/iota.lib.java)
+
+2. click on `Clone or download` and select `Download ZIP`
+
+3. unzip the downloaded master.zip file
+
+4. open you console (CMD on windows) and `cd` yourself into the directory `iota.lib.java-master/` you just unzipped
+
+5. execute `mvn install` to locally install the iota.lib.java repository
+
+## 3. CREATE THE JAR FILE
+
+Simply create the executable .jar directly from the GitHub source code. Again, there are several ways to do that:
+
+### METHOD A: DOWNLOAD VIA WGET
+
+	$ cd ~/my-favorite-directory/
+	$ wget https://github.com/mikrohash/isf-jclient/archive/master.zip
+	$ unzip master.zip
+	$ cd isf-jclient-master
+	$ mvn versions:use-latest-versions -DallowSnapshots=true -DexcludeReactor=false
+	$ mvn install
+
+### METHOD B: DOWNLOAD VIA GIT
+
+For this you will need the GIT plugin (installation on UBUNTU via: `sudo apt-get install git`)
+	
+	$ cd ~/my-favorite-directory/
+	$ git clone https://github.com/mikrohash/isf-jclient
+	$ cd isf-jclient
+	$ mvn versions:use-latest-versions -DallowSnapshots=true -DexcludeReactor=false
+	$ mvn install
+	
+### METHOD C: MANUAL DOWNLOAD
+
+1. go to [github.com/mikrohash/isf-jclient](https://github.com/mikrohash/isf-jclient)
+
+2. click on `Clone or download` and select `Download ZIP`
+
+3. unzip the downloaded master.zip file
+
+4. open you console (CMD on windows) and `cd` yourself into the directory `isf-jclient-master/` you just unzipped
+
+5. run `mvn versions:use-latest-versions -DallowSnapshots=true -DexcludeReactor=false` to update all dependencies to the newest versions
+
+5. execute `mvn install` to locally install the iota.lib.java repository
+
+## 4. RUN THE JAR FILE
 
 Simply start the .jar to run the spamming tool:
 
