@@ -1,32 +1,23 @@
 package isf;
 
-import java.util.LinkedList;
-import java.util.Queue;
-
 import jota.dto.response.GetAttachToTangleResponse;
 
-public class TxBroadcaster extends Thread {
-	
-	private static Queue<GetAttachToTangleResponse> trytesQueue = new LinkedList<GetAttachToTangleResponse>();
-	
-	@Override
-	public void run() {
-		while(true) {
-			GetAttachToTangleResponse trytes = trytesQueue.poll();
-			if(trytes != null) {
-				NodeManager.broadcastAndStore(trytes.getTrytes());
-			}
-			
-			if(trytesQueue.size() == 0)
-				try {
-					Thread.sleep(500);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-		}
-	}
+public class TxBroadcaster {
 	
 	public static void queueTrytes(GetAttachToTangleResponse res) {
-		trytesQueue.add(res);
+		final TimeBomb broadcastBomb = new TimeBomb("broadcasting tips", 1) {
+			@Override
+			void onCall() {
+				NodeManager.broadcastAndStore(res.getTrytes());
+			}
+		};
+		
+		new Thread() {
+			@Override
+			public void run() {
+				while(!broadcastBomb.call(10));
+				AddressManager.incrementSessionTxCount();
+			}
+		}.start();
 	}
 }

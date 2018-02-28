@@ -21,7 +21,7 @@ public class TipPool extends Thread {
 	public void run() {
 		gttarsLimit = Configs.getInt(P.THREADS_TIP_POOL_SIZE);
 		while(true) {
-			for(int i = 0; i < gttarsLimit-gttars.size(); i++) {
+			for(int i = 0; i < Math.min(gttarsLimit-gttars.size(), NodeManager.getAmountOfAvailableAPIs()); i++) {
 				new Thread() {
 					@Override
 					public void run() {

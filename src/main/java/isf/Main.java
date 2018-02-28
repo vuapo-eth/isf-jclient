@@ -28,7 +28,6 @@ public class Main {
 		
 		Logger.init();
 		new TipPool().start();
-		for(int i = 0; i < 10; i++) new TxBroadcaster().start();
 		new SpamThread().start();
 	}
 	

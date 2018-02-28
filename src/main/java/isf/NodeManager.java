@@ -267,6 +267,9 @@ public class NodeManager {
 		while(getTransactionsToApproveResponse == null) {
 			try {
 				getTransactionsToApproveResponse = apis[api].getTransactionsToApprove(DEPTH);
+			} catch(IllegalStateException e) {
+				if(e.getMessage().contains("thread interrupted")) throw e;
+				else api = handleThrowableFromIotaAPI("could not get transactions to approve", e, api);
 			} catch (Throwable e) {
 				api = handleThrowableFromIotaAPI("could not get transactions to approve", e, api);
 			}

@@ -15,8 +15,9 @@ public class AddressManager {
 	
 	private static String addressBase;
 	private static ArrayList<Tail> tails = new ArrayList<Tail>();
-	private static int txCountSinceTailCreation, txCountInit = 0, preSessionTransactions;
+	private static int preTailSessionTxCount, preSessionTailTxCount = 0, preSessionTxCount;
 	private static long lastTailCreated = 0;
+	private static int sessionTxCount = 0;
 	
 	public static void init() {
 		
@@ -33,6 +34,14 @@ public class AddressManager {
 	
 	public static void setAddressBase(String addressBase) {
 		AddressManager.addressBase = addressBase;
+	}
+	
+	public static void incrementSessionTxCount() {
+		sessionTxCount++;
+	}
+	
+	protected static int getSessionTxCount() {
+		return sessionTxCount;
 	}
 	
 	public static String getAddressBase() {
@@ -75,11 +84,15 @@ public class AddressManager {
 	
 	public static String getSpamAddress() {
 		String retAddress = addressBase + getTail().getTrytes();
-		if(txCountInit+SpamThread.getTotalTxs()-txCountSinceTailCreation >= MAX_TXS_PER_ADDRESS && System.currentTimeMillis() - lastTailCreated > 10000) {
+		if(preSessionTailTxCount+getSessionTxCount()-preTailSessionTxCount >= MAX_TXS_PER_ADDRESS && System.currentTimeMillis() - lastTailCreated > 10000) {
 			getTail().update();
-			writeTailsIntoFile();
-			lastTailCreated = System.currentTimeMillis();
-			createNewAddressTail();
+			if(getTail().getTotalTxs() >= MAX_TXS_PER_ADDRESS) {
+				writeTailsIntoFile();
+				lastTailCreated = System.currentTimeMillis();
+				createNewAddressTail();
+			} else {
+				sessionTxCount = getTail().getTotalTxs() + preTailSessionTxCount - preSessionTailTxCount;
+			}
 		}
 		return retAddress;
 	}
@@ -89,8 +102,8 @@ public class AddressManager {
 			getTail().setTimestamp((int)(System.currentTimeMillis()/1000));
 			APIManager.broadcastTail(getTail());
 		}
-		txCountSinceTailCreation = SpamThread.getTotalTxs();
-		txCountInit = 0;
+		preTailSessionTxCount = sessionTxCount;
+		preSessionTailTxCount = 0;
 		String tailTrytes = "";
 		while(tailTrytes.length() < 81 - addressBase.length())
 			tailTrytes += (char)((int)'A'+(int)(Math.random()*26));
@@ -108,18 +121,18 @@ public class AddressManager {
 			tail.update();
 			tail.setMilestone("-");
 			writeTailsIntoFile();
-			txCountInit = tail.getTotalTxs();
+			preSessionTailTxCount = tail.getTotalTxs();
 			uim.logDbg("picking up address from last session '"+getSpamAddress()+"' ("+tail.getConfirmedTxs() + "/" + tail.getTotalTxs() + " txs)");
 		} else {
 			createNewAddressTail();
 		}
 		
-		txCountSinceTailCreation = 0;
-		preSessionTransactions = getTailsTotalTxs(-1);
+		preTailSessionTxCount = 0;
+		preSessionTxCount = getTailsTotalTxs(-1);
 	}
 	
 	public static int getPreSessionTransactions() {
-		return preSessionTransactions;
+		return preSessionTxCount;
 	}
 	
 	public static double getTailsConfirmRate(int amountOfTails) {

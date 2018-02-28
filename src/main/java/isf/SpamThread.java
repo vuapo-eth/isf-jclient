@@ -6,7 +6,6 @@ import isf.ui.UIManager;
 
 public class SpamThread extends Thread {
 
-	private static int totalTxs = 0;
 	
 	private static boolean paused = false;
 	private static String tag = "IOTASPAM9DOT9COM99999999999";
@@ -41,7 +40,7 @@ public class SpamThread extends Thread {
 				}
 			}
 			
-			if(SPAM_BOMB.call(60000)) totalTxs++;
+			SPAM_BOMB.call(60000);
 		}
 	}
 	
@@ -61,10 +60,6 @@ public class SpamThread extends Thread {
 		}
 		
 		SpamThread.setPaused(obj.getBoolean("pause"));
-	}
-	
-	protected static int getTotalTxs() {
-		return totalTxs;
 	}
 	
 	public static boolean isPaused() {

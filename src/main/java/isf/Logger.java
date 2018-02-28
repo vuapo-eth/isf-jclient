@@ -56,7 +56,7 @@ public class Logger {
 				+ ":" + (min%60 < 10 ? "0" : "") + min%60
 				+ ":" + (sec%60 < 10 ? "0" : "") + sec%60;
 		
-		double miotaPerMonth = (30*24*60*60000.0*SpamThread.getTotalTxs()/timeRunning)*currentReward/1e6*AddressManager.getTailsConfirmRate(15)/100;
+		double miotaPerMonth = (30*24*60*getSpamSpeed())*currentReward/1e6*AddressManager.getTailsConfirmRate(15)/100;
 		
 		String speed = "SPEED " + UIManager.padLeft(df.format(getSpamSpeed()), 5) + " txs/min | ";
 		if(SpamThread.isPaused())
@@ -130,11 +130,11 @@ public class Logger {
 	}
 	
 	private static int getTotalSpam() {
-		return SpamThread.getTotalTxs() + AddressManager.getPreSessionTransactions();
+		return AddressManager.getSessionTxCount() + AddressManager.getPreSessionTransactions();
 	}
 	
 	private static double getSpamSpeed() {
 		int timeRunning = getTimeRunning();
-		return timeRunning > 0 ? 60000.0*SpamThread.getTotalTxs()/timeRunning : 0;
+		return timeRunning > 0 ? 60000.0*AddressManager.getSessionTxCount()/timeRunning : 0;
 	}
 }
