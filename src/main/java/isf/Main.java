@@ -60,7 +60,7 @@ public class Main {
 	}
 	
 	public static String getBuild() {
-		return "7";
+		return "8";
 	}
 	
 	public static String buildFullVersion() {
