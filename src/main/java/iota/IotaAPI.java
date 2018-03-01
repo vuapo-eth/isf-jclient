@@ -34,7 +34,7 @@ public class IotaAPI extends jota.IotaAPI {
         List<String> trytes = prepareTransfers("", SECURITY,  transfers, null, inputs, false);
 
         GetTransactionsToApproveResponse txs = TipPool.getTransactionsToApprove();
-		while(txs == null) txs = NodeManager.getTransactionsToApprove();
+		while(txs == null) txs = NodeManager.getTransactionsToApprove(NodeManager.getRotatedAPI());
         final GetAttachToTangleResponse res = attachToTangle(txs.getTrunkTransaction(), txs.getBranchTransaction(), MIN_WEIGHT_MAGNITUDE, trytes.toArray(new String[trytes.size()]));
         
         TxBroadcaster.queueTrytes(res);

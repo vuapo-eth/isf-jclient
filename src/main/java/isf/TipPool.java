@@ -10,23 +10,25 @@ public class TipPool extends Thread {
 	private static Stack<GetTransactionsToApproveResponse> gttars = new Stack<GetTransactionsToApproveResponse>();
 	private static int gttarsLimit;
 	
-	private static final TimeBomb GTTA_BOMB = new TimeBomb("requesting transactions to approve (tips)", 30) {
-		@Override
-		boolean onCall() {
-			gttars.push(NodeManager.getTransactionsToApprove());
-			return true;
-		}
-	};
-	
 	@Override
 	public void run() {
 		gttarsLimit = Configs.getInt(P.THREADS_TIP_POOL_SIZE);
 		while(true) {
-			for(int i = 0; i < Math.min(gttarsLimit-gttars.size(), NodeManager.getAmountOfAvailableAPIs()*10); i++) {
+			for(int i = 0; i < Math.min(gttarsLimit-gttars.size(), NodeManager.getAmountOfAvailableAPIs()); i++) {
 				new Thread() {
 					@Override
 					public void run() {
-						GTTA_BOMB.call(10);
+						
+						final int api = NodeManager.getRotatedAPI();
+						TimeBomb tb = new TimeBomb("requesting transactions to approve (tips)", -1) {
+							@Override
+							boolean onCall() {
+								GetTransactionsToApproveResponse gttar = NodeManager.getTransactionsToApprove(api);
+								if(gttar != null) gttars.push(gttar);
+								return gttar != null;
+							}
+						};
+						while(gttars.size() < gttarsLimit && tb.call(10));
 					}
 				}.start();
 			}

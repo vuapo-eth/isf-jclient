@@ -145,7 +145,7 @@ public class NodeManager {
 	}
 	
 
-	private static int getRotatedAPI() {
+	public static int getRotatedAPI() {
 		rotateAPI();
 		return getAPI();
 	}
@@ -233,7 +233,7 @@ public class NodeManager {
 		return getNodeInfoResponse.getLatestMilestone();
 	}
 	
-	public static GetNodeInfoResponse getNodeInfo(int api) {
+	public static GetNodeInfoResponse getNodeInfo(final int api) {
 		
 		final ObjectCarrier oc = new ObjectCarrier();
 		
@@ -289,8 +289,7 @@ public class NodeManager {
 		return transactions;
 	}
 	
-	public static GetTransactionsToApproveResponse getTransactionsToApprove() {
-		int api = getRotatedAPI();
+	public static GetTransactionsToApproveResponse getTransactionsToApprove(int api) {
 		GetTransactionsToApproveResponse getTransactionsToApproveResponse = null;
 
 		long timeStarted = System.currentTimeMillis();
@@ -390,7 +389,7 @@ public class NodeManager {
 		Collections.shuffle(nodeList);
 	}
 	
-	private static void doSyncCheck(int api) {
+	private static void doSyncCheck(final int api) {
 		new Thread() {
 			@Override
 			public void run() {
