@@ -11,7 +11,7 @@ public class Main {
 	
 	public static void main(String[] args) {
 		
-		uim.print("\n===== Welcome to the Spam Fund Java Client " + Main.buildFullVersion() + " ===");
+		uim.print(UIManager.ANSI_BOLD+"\n===== Welcome to the Spam Fund Java Client " + Main.buildFullVersion() + " =====");
 		Configs.loadOrGenerate();
 		
 		mainMenu(args.length > 0 && args[0] != null ? args[0].toLowerCase() : "");
@@ -60,7 +60,7 @@ public class Main {
 	}
 	
 	public static String getBuild() {
-		return "6";
+		return "7";
 	}
 	
 	public static String buildFullVersion() {

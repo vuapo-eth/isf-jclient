@@ -27,7 +27,7 @@ public abstract class UIQuestion {
 	public static final UIQuestion Q_NODES = new UIQuestion() {
 		@Override
 		public boolean isAnswer(String str) {
-			if(str.equals("")) return Configs.getBln(P.NODES_THIRD_PARTY_LIST) || Configs.get(P.NODES_LIST).length()>0;
+			if(str.equals("")) return Configs.getBln(P.NODES_THIRD_PARTY_NODE_LIST) || Configs.get(P.NODES_LIST).length()>0;
 	        return VALID_NODE_ADDRESS_REGEX .matcher(str).find();
 		}
 	}.setQuestion("please enter the API port of the node you want to add [format: 'protocol://host:port', e.g. 'http://node.example.org:14265']");

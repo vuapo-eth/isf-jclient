@@ -14,7 +14,7 @@ import isf.ui.UIQuestionInt;
 public class Configs {
 	
 	private static final UIManager UIM = new UIManager("Configs");
-	private static final String CONFIG_FILE_NAME = "config-"+Main.buildFullVersion()+".ini";
+	private static final String CONFIG_FILE_NAME = "config.ini";
 	
 	private static Wini wini;
 	
@@ -69,9 +69,9 @@ public class Configs {
 		
 		NodeManager.clearNodes();
 		
-		set(P.NODES_THIRD_PARTY_LIST, UIM.askForBoolean((firstSetup ? "[1/2] " : "")+"do you want to use third party node lists?"));
+		set(P.NODES_THIRD_PARTY_NODE_LIST, UIM.askForBoolean((firstSetup ? "[1/2] " : "")+"do you want to use third party node lists?"));
 		
-		if(!getBln(P.NODES_THIRD_PARTY_LIST) || UIM.askForBoolean("do you want to add other nodes to your node list?")) {
+		if(!getBln(P.NODES_THIRD_PARTY_NODE_LIST) || UIM.askForBoolean("do you want to add other nodes to your node list?")) {
 			String nodeInput = null;
 			do {
 				nodeInput = UIM.askQuestion(UIQuestion.Q_NODES);
@@ -81,13 +81,15 @@ public class Configs {
 				}
 			} while(nodeInput.length() > 0 && UIM.askForBoolean("do you want to add another node?"));
 		}
-		
-		if(getBln(P.NODES_THIRD_PARTY_LIST))
-			NodeManager.importRemoteNodeList();
 
-		int recommended = Math.max(1, Math.min(10, NodeManager.getAmountOfNodes()));
-		UIQuestionInt.Q_NODES_AMOUNT_ROTATION.setMax(NodeManager.getAmountOfNodes()).setRecommended(recommended);
-		set(P.NODES_AMOUNT_ROTATION, firstSetup ? recommended : UIM.askQuestionInt(UIQuestionInt.Q_NODES_AMOUNT_ROTATION));
+		NodeManager.clearNodes();
+		NodeManager.loadNodeList();
+
+		if(!firstSetup) {
+			int recommended = Math.max(1, Math.min(Integer.parseInt(P.NODES_AMOUNT_ROTATION.defaultValue), NodeManager.getAmountOfNodes()));
+			UIQuestionInt.Q_NODES_AMOUNT_ROTATION.setMax(NodeManager.getAmountOfNodes()).setRecommended(recommended);
+			set(P.NODES_AMOUNT_ROTATION, UIM.askQuestionInt(UIQuestionInt.Q_NODES_AMOUNT_ROTATION));
+		}
 	}
 	
 	private static void load() {
@@ -95,9 +97,9 @@ public class Configs {
 		
 		UIM.logDbg("loading configurations");
 		
-		isf_email = wini.get("spamfund", "email");
+		isf_email = get(P.SPAMFUND_EMAIL);
 		if(isf_email.length() == 0) isf_email = null;
-		isf_password = wini.get("spamfund", "password");
+		isf_password = get(P.SPAMFUND_PASSWORD);
 		if(isf_password.length() == 0) isf_password = null;
 
 		if(isf_email == "" || isf_password == "")
@@ -142,6 +144,7 @@ public class Configs {
 				askForNodes(false);
 			} else if(variable.equals("log")) {
 				Configs.set(P.LOG_INTERVAL, UIM.askQuestionInt(UIQuestionInt.Q_LOG_INTERVAL));
+				Configs.set(P.LOG_PERFORMANCE_REPORT_INTERVAL, UIM.askQuestionInt(UIQuestionInt.Q_LOG_PERFORMANCE_REPORT_INTERVAL));
 				do Configs.set(P.LOG_TIME_FORMAT, UIM.askQuestion(UIQuestion.Q_TIME_FORMAT));
 				while(!UIM.askForBoolean("do you really want your time to be displayed like that: " + new SimpleDateFormat(get(P.LOG_TIME_FORMAT)).format(new Date()) +"?"));
 				askForColors();
@@ -163,35 +166,23 @@ public class Configs {
 	}
 	
 	private static void initWini() {
-		int amountOfCores = Runtime.getRuntime().availableProcessors();
 		
 		UIM.logDbg("generating default configuration");
 
-		set(P.GENERAL_VERSION, Main.buildFullVersion());
-		set(P.NODES_SYNC_CHECK_INTERVAL, 600);
-		set(P.NODES_AMOUNT_ROTATION, 20);
-		set(P.NODES_LIST, "");
-		set(P.NODES_THIRD_PARTY_LIST, true);
-		set(P.LOG_COLORS_ENABLED, true);
-		set(P.LOG_INTERVAL, 60);
-		set(P.LOG_TIME_FORMAT, "HH:mm:ss");
-		set(P.THREADS_TIP_POOL_SIZE, 10);
-		set(P.THREADS_AMOUNT_POW, Math.max(1, amountOfCores-1));
-		set(P.THREADS_PRIORITY_POW, 3);
-		set(P.SPAMFUND_EMAIL, "");
-		set(P.SPAMFUND_PASSWORD, "");
+		for(P p : P.values())
+			set(p, p.defaultValue);
 	}
 	
 	public static int getInt(P p) {
-		return wini.get(p.parent, p.name, int.class);
+		return Integer.parseInt(get(p));
 	}
 	
 	public static boolean getBln(P p) {
-		return wini.get(p.parent, p.name, boolean.class);
+		return Boolean.parseBoolean(get(p));
 	}
 	
 	public static String get(P p) {
-		return wini == null ? null : wini.get(p.parent, p.name);
+		return (String)p.get(wini);
 	}
 	
 	private static void set(P p, Object o) {
@@ -200,7 +191,6 @@ public class Configs {
 	
 	private static void loadWini() {
 		File f = FileManager.getFile(CONFIG_FILE_NAME);
-		
 		try {
 			if(!f.exists()) {
 				f.createNewFile();
@@ -211,9 +201,6 @@ public class Configs {
 				wini = new Wini(f);
 				load();
 			}
-			
-			NodeManager.addToNodeList(get(P.NODES_LIST).replace(" ", ""));
-			if(getBln(P.NODES_THIRD_PARTY_LIST)) NodeManager.importRemoteNodeList();
 		} catch (IOException e) {
 			UIM.logWrn("loading configuration file failed [maybe the jar is missing permission to write here, try to start it with 'sudo java -jar ...']");
 			UIM.logException(e, true);

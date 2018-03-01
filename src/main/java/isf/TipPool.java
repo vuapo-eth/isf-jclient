@@ -12,8 +12,9 @@ public class TipPool extends Thread {
 	
 	private static final TimeBomb GTTA_BOMB = new TimeBomb("requesting transactions to approve (tips)", 10) {
 		@Override
-		void onCall() {
+		boolean onCall() {
 			gttars.push(NodeManager.getTransactionsToApprove());
+			return true;
 		}
 	};
 	

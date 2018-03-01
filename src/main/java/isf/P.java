@@ -1,25 +1,38 @@
 package isf;
 
+import org.ini4j.Profile.Section;
+import org.ini4j.Wini;
+
 public enum P {
 	
-	GENERAL_VERSION("general", "version"),
-	LOG_COLORS_ENABLED("log", "colors_enabled"),
-	LOG_INTERVAL("log", "interval"),
-	LOG_TIME_FORMAT("log", "time_format"),
-	THREADS_TIP_POOL_SIZE("threads", "tip_pool_size"),
-	THREADS_AMOUNT_POW("threads", "amount_pow"),
-	THREADS_PRIORITY_POW("threads", "priority_pow"),
-	NODES_LIST("nodes", "node_list"),
-	NODES_AMOUNT_ROTATION("nodes", "amount_rotation"),
-	NODES_THIRD_PARTY_LIST("nodes", "third_party_node_list"),
-	NODES_SYNC_CHECK_INTERVAL("nodes", "sync_check_interval"),
-	SPAMFUND_EMAIL("spamfund", "email"),
-	SPAMFUND_PASSWORD("spamfund", "password");
+	GENERAL_VERSION(Main.buildFullVersion()),
+	LOG_COLORS_ENABLED("true"),
+	LOG_INTERVAL("60"),
+	LOG_PERFORMANCE_REPORT_INTERVAL("300"),
+	LOG_TIME_FORMAT("HH:mm:ss"),
+	THREADS_TIP_POOL_SIZE("10"),
+	THREADS_AMOUNT_POW(""+Math.max(1, Runtime.getRuntime().availableProcessors()-1)),
+	THREADS_PRIORITY_POW("3"),
+	NODES_LIST(""),
+	NODES_AMOUNT_ROTATION("20"),
+	NODES_THIRD_PARTY_NODE_LIST("true"),
+	NODES_SYNC_CHECK_INTERVAL("600"),
+	SPAMFUND_EMAIL(""),
+	SPAMFUND_PASSWORD("");
 	
 	public final String parent, name;
+	public final String defaultValue;
 	
-	P(String parent, String name) {
-		this.parent = parent;
-		this.name = name;
+	P(String defaultValue) {
+		String enumName = toString();
+		parent = enumName.split("_")[0];
+		name = enumName.substring(parent.length()+1, enumName.length());
+		this.defaultValue = defaultValue;
+	}
+	
+	public Object get(Wini wini) {
+		Section sec = wini.getOrDefault(parent, null);
+		if(sec == null) return defaultValue;
+		return sec.getOrDefault(name, defaultValue);
 	}
 }

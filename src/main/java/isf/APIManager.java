@@ -51,8 +51,7 @@ public class APIManager {
 			return response.toString();
 			
 		} catch (IOException e) {
-			uim.logWrn("problem communicating with " + urlString);
-			uim.logException(e, false);
+			uim.logWrn("problem communicating with " + urlString + ": " + e.getMessage());
 			return null;
 		}
 	}
@@ -129,6 +128,12 @@ public class APIManager {
 			String error;
 			int errorId = -1;
 			if(jsonString == null) {
+				if(filename.equals("signin")) {
+					if(APIManager.request(CMC_API_IOTA, null) == null)
+						error = "could neither access '" + SPAM_FUND_API_URL + filename+".php' nor '"+CMC_API_IOTA+"', please check your internet connection and firewall settings";
+					else
+						error = "could not access '" + SPAM_FUND_API_URL + filename+".php' but could access '"+CMC_API_IOTA+"', please report this on github or send us an email to contact@iotaspam.com";
+				}
 				error = "could not access '" + SPAM_FUND_API_URL + filename+".php', please check your internet connection";
 			} else try {
 				JSONObject obj = new JSONObject(jsonString);

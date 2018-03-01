@@ -22,8 +22,7 @@ public abstract class TimeBomb {
 		Thread t = new Thread() {
 			@Override
 			public void run() {
-				onCall();
-				r.setResult(true);
+				r.setResult(onCall());
 				synchronized (r) { r.notify(); }
 			}
 		};
@@ -34,11 +33,12 @@ public abstract class TimeBomb {
 		} catch (InterruptedException e) {
 			UIM.logException(e, true);
 		}
-		t.interrupt();
+		if(!r.getResult()) {
+			fails++;
+			t.interrupt();
+		}
 		
-		if(!r.getResult()) fails++;
-		
-		if(fails >= tolerance) {
+		if(tolerance > 0 && fails >= tolerance) {
 			UIM.logWrn("action '" + actionName + "' took too long and was aborted after "+timeLimitSeconds+" seconds" + (tolerance > 1 ? " (this message only shows up on every "+tolerance+"th abortion)" : ""));
 			fails = 0;
 		}
@@ -46,7 +46,7 @@ public abstract class TimeBomb {
 		return r.getResult();
 	}
 	
-	abstract void onCall();
+	abstract boolean onCall();
 }
 
 class Result {

@@ -21,6 +21,7 @@ public class Logger {
 
 		timeStarted = System.currentTimeMillis();
 		int logInterval = Configs.getInt(P.LOG_INTERVAL);
+		int performanceReportInterval = Configs.getInt(P.LOG_PERFORMANCE_REPORT_INTERVAL);
 		uim.logDbg("starting logger, logs will appear in " + logInterval + "s intervals");
 		
 		updateBalance();
@@ -28,7 +29,7 @@ public class Logger {
 		TimeManager.addTask(new Task(1800000, false) { @Override void onCall() { updateIotaTicker(); } });
 		TimeManager.addTask(new Task(120000, false) { @Override void onCall() { updateBalance(); } });
 		TimeManager.addTask(new Task(logInterval * 1000, true) { @Override void onCall() { log(); } });
-		TimeManager.addTask(new Task(5 * logInterval * 1000, false) { @Override void onCall() { performanceReport(); } });
+		TimeManager.addTask(new Task(performanceReportInterval * 1000, false) { @Override void onCall() { performanceReport(); } });
 	}
 	
 	private static void updateBalance() {

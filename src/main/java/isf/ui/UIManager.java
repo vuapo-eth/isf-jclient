@@ -67,7 +67,7 @@ public class UIManager {
 			try {
 				Thread.sleep(pauseUntil - System.currentTimeMillis());
 			} catch (InterruptedException e) {
-				logException(e, true);
+				
 			}
 		}
 		

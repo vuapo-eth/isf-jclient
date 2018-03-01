@@ -7,8 +7,9 @@ public class TxBroadcaster {
 	public static void queueTrytes(GetAttachToTangleResponse res) {
 		final TimeBomb broadcastBomb = new TimeBomb("broadcasting tips", 10) {
 			@Override
-			void onCall() {
+			boolean onCall() {
 				NodeManager.broadcastAndStore(res.getTrytes());
+				return true;
 			}
 		};
 		
