@@ -28,8 +28,8 @@ public class AddressManager {
 			createNewAddressTail();
 		}
 		
-		TimeManager.addTask(new Task(300000, true) { @Override void onCall() { AddressManager.getTail().update(); } });
-		TimeManager.addTask(new Task(60000, true) { @Override void onCall() { AddressManager.updateTails(); } });
+		TimeCaller.addTask(new Task(300000, true, false) { @Override void onCall() { AddressManager.getTail().update(); } });
+		TimeCaller.addTask(new Task(60000, true, false) { @Override void onCall() { AddressManager.updateTails(); } });
 	}
 	
 	public static void setAddressBase(String addressBase) {
@@ -53,8 +53,9 @@ public class AddressManager {
 		boolean anythingChanged = false;
 		for(int i = 0; i < tails.size()-1; i++) {
 			Tail tail = tails.get(i);
-			if(tail.getTimestamp() < System.currentTimeMillis()/1000-DURATION_UNTIL_CHECKING_TAIL && tail.getMilestone().equals("-")) {
+			if(tail.getTimestamp() < System.currentTimeMillis()/1000-DURATION_UNTIL_CHECKING_TAIL && !tail.isLastCheckCompleted()) {
 				tail.update();
+				tail.setLastCheckCompleted(true);
 				anythingChanged = true;
 			}
 		}
@@ -74,7 +75,7 @@ public class AddressManager {
 		String[] tailStrings = s.replace(" ", "").split("\n");
 		tails = new ArrayList<Tail>();
 		for(int i = 0; i < tailStrings.length; i++) {
-			if(tailStrings[i].length() > 0) tails.add(new Tail(tailStrings[i]));
+			if(tailStrings[i].length() > 0) tails.add(new Tail(tailStrings[i].split("\\|")));
 		}
 	}
 	
@@ -109,7 +110,7 @@ public class AddressManager {
 			tailTrytes += (char)((int)'A'+(int)(Math.random()*26));
 		uim.logDbg("changing spam address to "  + addressBase + tailTrytes);
 		
-		tails.add(new Tail(tailTrytes + "|0|0|0|0"));
+		tails.add(new Tail(tailTrytes, 0, 0, 0, false));
 		writeTailsIntoFile();
 	}
 	
@@ -119,7 +120,6 @@ public class AddressManager {
 		if(tails.size() > 0) {
 			Tail tail = getTail();
 			tail.update();
-			tail.setMilestone("-");
 			writeTailsIntoFile();
 			preSessionTailTxCount = tail.getTotalTxs();
 			uim.logDbg("picking up address from last session '"+getSpamAddress()+"' ("+tail.getConfirmedTxs() + "/" + tail.getTotalTxs() + " txs)");

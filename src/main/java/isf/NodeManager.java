@@ -6,35 +6,36 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import isf.ui.UIManager;
-import iota.GoldDiggerLocalPoW;
+import iota.GOldDiggerLocalPoW;
 import iota.IotaAPI;
 import jota.dto.response.FindTransactionResponse;
 import jota.dto.response.GetInclusionStateResponse;
 import jota.dto.response.GetNodeInfoResponse;
 import jota.dto.response.GetTransactionsToApproveResponse;
 import jota.dto.response.StoreTransactionsResponse;
-import jota.error.ArgumentException;
 import jota.model.Transaction;
 
 public class NodeManager {
 
 	private static final UIManager uim = new UIManager("NodeMngr");
+	private static int DEPTH = 1;
 	
-	private static final int DEPTH = 4, INCONSISTENT_TIPS_PAIR_TOLERANCE = 20, TIP_AGE_TOLERANCE = 180, CONNECTING_DURATION_TOLERACE = 5, NODEINFO_DURATION_TOLERANCE = 3;
-	
+	private static final int INCONSISTENT_TIPS_PAIR_TOLERANCE = 20, TIP_AGE_TOLERANCE = 180, CONNECTING_DURATION_TOLERACE = 6, NODEINFO_DURATION_TOLERANCE = 6;
 	private static final Pattern VALID_NODE_ADDRESS_REGEX = Pattern.compile("^(http|https)(://)[A-Z0-9.-]*(:)[0-9]{1,5}$", Pattern.CASE_INSENSITIVE);
 	
 	private static ArrayList<String> nodeList = null;
+	private static int nodeIndex = 0;
 	
 	private static int amountGetTxsToApprove = 0;
 	private static long totalTimeGetTxsToApprove = 0;
+	
 	private static IotaAPI[] apis;
 	private static boolean[] available;
 	private static int[] inconsistentTipsPairs;
 	private static long[] lastSyncCheck;
+	
 	private static int apiIndex = 0;
 	private static int availableAPIs = 0;
-	private static int nodeIndex = 0;
 	
 	public static int getAmountOfAvailableAPIs() {
 		return availableAPIs;
@@ -64,17 +65,17 @@ public class NodeManager {
 		for(int i = 0; i < apis.length; i++)
 			connectToAnyNode(i, null);
 		
-		if(Configs.getBln(P.NODES_THIRD_PARTY_NODE_LIST)) TimeManager.addTask(new Task(30*60*1000, false) {
-			@Override void onCall() { loadNodeList(); }
-		});
+		if(Configs.getBln(P.NODES_THIRD_PARTY_NODE_LIST)) TimeCaller.addTask(new Task(30*60000, false, false) { @Override void onCall() { loadNodeList(); } });
+		
+		DEPTH = Configs.getInt(P.SPAM_DEPTH);
 	}
 
 	private static boolean connectToNode(final String node, final int api) {
 		
-		TimeBomb t = new TimeBomb("connecting to node", 1) {
+		TimeAbortCall t = new TimeAbortCall("connecting to node", 1) {
 			
 			@Override
-			boolean onCall() {
+			public boolean onCall() {
 				
 				String protocol = node.split(":")[0];
 				String host = node.split(":")[1].replace("//", "");
@@ -84,7 +85,7 @@ public class NodeManager {
 				        .protocol(protocol)
 				        .host(host)
 				        .port(port)
-				        .localPoW(new GoldDiggerLocalPoW())
+				        .localPoW(new GOldDiggerLocalPoW())
 				        .build();
 				
 				return true;
@@ -93,10 +94,10 @@ public class NodeManager {
 		
 		if(!t.call(CONNECTING_DURATION_TOLERACE)) return false;
 		
-		String nodeSyncedMsg = isSolidSubtangleUpdated(api);
-		if(nodeSyncedMsg != null)
-			uim.logDbg("node '" + buildNodeAddress(api) + "' ["+api+"] is not synced ("+nodeSyncedMsg+"), changing node");
-		return nodeSyncedMsg == null;
+		String isNodeSynced = isNodeSynced(api);
+		if(isNodeSynced != null)
+			uim.logDbg("node '" + buildNodeAddress(api) + "' ["+api+"] is not synced ("+isNodeSynced+"), changing node");
+		return isNodeSynced == null;
 	}
 
 	public static void connectToAnyNode(final int api, final String parNodeSyncedMsg) {
@@ -105,7 +106,7 @@ public class NodeManager {
 		if(parNodeSyncedMsg != null)
 			uim.logDbg("node '" + buildNodeAddress(api) + "' ["+api+"] is not synced ("+parNodeSyncedMsg+"), changing node");
 		
-		new Thread() {
+		new Thread("connectToAnyNode("+api+")") {
 			@Override
 			public void run() {
 				while(!connectToNode(getNextNode(), api)) {
@@ -117,7 +118,6 @@ public class NodeManager {
 					}
 				}
 				
-				lastSyncCheck[api] = System.currentTimeMillis()/1000;
 				available[api] = true;
 				
 				int newAvailableAPIs = 0;
@@ -191,23 +191,22 @@ public class NodeManager {
 			try {
 				 findTransactionResponse = apis[api].findTransactionsByAddresses(addresses);
 			} catch (Throwable e) {
-				api = handleThrowableFromIotaAPI("could not check state of spam address '"+address+"'", e, api);
+				api = handleThrowableFromIotaAPI("check state of spam address '"+address+"'", e, api);
 			}
 		}
 		
 		return findTransactionResponse.getHashes();
 	}
 	
-	public static boolean[] getInclusionStates(String[] hashes, String tip) {
+	public static boolean[] getLatestInclusion(String[] hashes) {
 		int api = getAPI();
-		String[] tips = {tip};
 		GetInclusionStateResponse getInclusionStateResponse = null;
 		
 		while(getInclusionStateResponse == null) {
 			try {
-				getInclusionStateResponse = apis[api].getInclusionStates(hashes, tips);
+				getInclusionStateResponse = apis[api].getLatestInclusion(hashes);
 			} catch (Throwable e) {
-				api = handleThrowableFromIotaAPI("could not check latest inclusion states", e, api);
+				api = handleThrowableFromIotaAPI("check latest inclusion states", e, api);
 			}
 		}
 		return getInclusionStateResponse.getStates();
@@ -219,61 +218,33 @@ public class NodeManager {
 		do {
 			if(getNodeInfoResponse != null) {
 				connectToAnyNode(apiIndex, "latest milestone older than 10 minutes");
-				sleep(5000);
+				api = getRotatedAPI();
 			}
-			getNodeInfoResponse = null;
-			while(getNodeInfoResponse == null) {
-				try {
-					getNodeInfoResponse = apis[api].getNodeInfo();
-				} catch (Throwable e) {
-					api = handleThrowableFromIotaAPI("could not receive getNodeInfo", e, api);
-				}
-			}
+			getNodeInfoResponse = getNodeInfo(api, true);
 		} while(findTractionsByHashes(new String[] {getNodeInfoResponse.getLatestMilestone()}, api).get(0).getTimestamp() < System.currentTimeMillis()/1000-600);
 		return getNodeInfoResponse.getLatestMilestone();
 	}
 	
-	public static GetNodeInfoResponse getNodeInfo(final int api) {
+	public static GetNodeInfoResponse getNodeInfo(final int parApi, boolean tryMultipleTimes) {
+
+		final ObjectCarrier api = new ObjectCarrier(parApi);
+		final ObjectCarrier res = new ObjectCarrier(null);
 		
-		final ObjectCarrier oc = new ObjectCarrier();
-		
-		TimeBomb tb = new TimeBomb("requesting node info", 0) {
-			
+		TimeAbortCall tb = new TimeAbortCall("requesting node info", 0) {
 			@Override
-			boolean onCall() {
-				oc.o = apis[api].getNodeInfo();
-				return true;
+			public boolean onCall() {
+				try {
+					res.o = apis[(int)api.o].getNodeInfo();
+					return true;
+				} catch (Throwable e) {
+					api.o = handleThrowableFromIotaAPI("receive getNodeInfo", e, (int)api.o);
+					return false;
+				}
 			}
 		};
 		
-		tb.call(NODEINFO_DURATION_TOLERANCE);
-		return (GetNodeInfoResponse) oc.o;
-	}
-	
-	public static String isSolidSubtangleUpdated(int api) {
-		
-		GetNodeInfoResponse getNodeInfoResponse = null;
-		try {
-			getNodeInfoResponse = getNodeInfo(api);
-		} catch (Throwable e) {
-			return e.getMessage() == null || e.getMessage().length() == 0 ? "not sure why though" : e.getMessage();
-		}
-		
-		if(getNodeInfoResponse == null)
-			return "did not receive getNodeInfoResponse response within "+NODEINFO_DURATION_TOLERANCE+" seconds";
-		
-		if(Math.abs(getNodeInfoResponse.getLatestSolidSubtangleMilestoneIndex()-getNodeInfoResponse.getLatestMilestoneIndex()) > 3) {
-			return "solid subtangle is not updated: lacking "+(getNodeInfoResponse.getLatestMilestoneIndex()-getNodeInfoResponse.getLatestSolidSubtangleMilestoneIndex())+" milestones behind";
-		}
-		
-		String milestone = getNodeInfoResponse.getLatestSolidSubtangleMilestone();
-		long secondsBehind = System.currentTimeMillis()/1000-findTractionsByHashes(new String[] {milestone}, api).get(0).getTimestamp();
-		
-		if(secondsBehind > 600) {
-			return "lacking "+(secondsBehind/60)+" minutes behind";
-		}
-		
-		return null;
+		do { tb.call(NODEINFO_DURATION_TOLERANCE); } while(tryMultipleTimes);
+		return (GetNodeInfoResponse) res.o;
 	}
 	
 	public static List<Transaction> findTractionsByHashes(String[] hashes, int api) {
@@ -283,10 +254,14 @@ public class NodeManager {
 			try {
 				transactions = apis[api].findTransactionsObjectsByHashes(hashes);
 			} catch (Throwable e) {
-				api = handleThrowableFromIotaAPI("could not find transactions", e, api);
+				api = handleThrowableFromIotaAPI("find transactions", e, api);
 			}
 		}
 		return transactions;
+	}
+	
+	public static boolean isAvailable(int api) {
+		return available[api];
 	}
 	
 	public static GetTransactionsToApproveResponse getTransactionsToApprove(int api) {
@@ -295,12 +270,13 @@ public class NodeManager {
 		long timeStarted = System.currentTimeMillis();
 		while(getTransactionsToApproveResponse == null) {
 			try {
+				if(!available[api]) return null;
 				getTransactionsToApproveResponse = apis[api].getTransactionsToApprove(DEPTH);
 			} catch(IllegalStateException e) {
 				if(e.getMessage().contains("thread interrupted")) {}
-				else api = handleThrowableFromIotaAPI("could not get transactions to approve", e, api);
+				else api = handleThrowableFromIotaAPI("get transactions to approve", e, api);
 			} catch (Throwable e) {
-				api = handleThrowableFromIotaAPI("could not get transactions to approve", e, api);
+				api = handleThrowableFromIotaAPI("get transactions to approve", e, api);
 			}
 		}
         totalTimeGetTxsToApprove += System.currentTimeMillis()-timeStarted;
@@ -317,39 +293,53 @@ public class NodeManager {
 			}
 			return getRotatedAPI();
 		}
-			
-		String errorMsg = e.getMessage();
 		
-		if(IllegalAccessError.class.isAssignableFrom(e.getClass()) || ArgumentException.class.isAssignableFrom(e.getClass()))
-			errorMsg = failedAction + ": '" +
-				(e.getMessage().contains("\"error\"") ? (e.getMessage().split("\"error\":\"")[1].split("\"")[0] + "'") : e.getMessage());
-		else if (e.getMessage() == null || !e.getMessage().contains("Failed to connect to"))
-			uim.logException(e, false);
+		String errorClassName = e.getClass().getName();
+		String errorMessage = (e.getMessage().contains("\"error\"") ? (e.getMessage().split("\"error\":\"")[1].split("\"")[0] + "'") : e.getMessage());
+		String error = "could not " + failedAction + ": " + errorClassName + " - " + errorMessage;
 		
-		connectToAnyNode(i, errorMsg);
+		connectToAnyNode(i, error);
 		return getRotatedAPI();
 	}
 	
-	private static boolean isNodeSynced(int api) {
+	private static String isNodeSynced(int api) {
+		
+		GetNodeInfoResponse getNodeInfoResponse = null;
+		try {
+			getNodeInfoResponse = getNodeInfo(api, false);
+		} catch (Throwable e) {
+			return e.getClass().getName() + ": " + e.getMessage();
+		}
+		
+		if(getNodeInfoResponse == null)
+			return "did not receive getNodeInfoResponse response within "+NODEINFO_DURATION_TOLERANCE+" seconds";
+		
+		if(Math.abs(getNodeInfoResponse.getLatestSolidSubtangleMilestoneIndex()-getNodeInfoResponse.getLatestMilestoneIndex()) > 3)
+			return "solid subtangle is not updated: lacking "+(getNodeInfoResponse.getLatestMilestoneIndex()-getNodeInfoResponse.getLatestSolidSubtangleMilestoneIndex())+" milestones behind";
+		
+		String milestone = getNodeInfoResponse.getLatestSolidSubtangleMilestone();
+		long secondsBehind = System.currentTimeMillis()/1000-findTractionsByHashes(new String[] {milestone}, api).get(0).getTimestamp();
+		if(secondsBehind > 600)
+			return "lacking "+(secondsBehind/60)+" minutes behind";
 		
 		GetTransactionsToApproveResponse getTransactionsToApproveResponse = null;
 		
 		try {
-			UIManager.setSystemErrorEnabled(false);
 			getTransactionsToApproveResponse = apis[api].getTransactionsToApprove(DEPTH);
-			UIManager.setSystemErrorEnabled(true);
 		}  catch (Throwable e) {
-			return false;
+			return e.getClass().getName() + ": " + e.getMessage();
 		}
-		if(getTransactionsToApproveResponse == null) return false; // it happens, for whatever reason?!
+		
+		if(getTransactionsToApproveResponse == null) return "getTransactionsToApproveResponse == null";
+		
 		String[] hashes = {getTransactionsToApproveResponse.getBranchTransaction(), getTransactionsToApproveResponse.getTrunkTransaction()};
 		List<Transaction> transactions = findTractionsByHashes(hashes, api);
-		if(transactions.size() == 0)
-			return false;
+		if(transactions.size() == 0) return "silly node pretends to not know tips it just provided";
 		long newerTimestamp = Math.max(transactions.get(0).getAttachmentTimestamp(), transactions.get(1).getAttachmentTimestamp());
-
+		long tipAge = System.currentTimeMillis() /1000-newerTimestamp;
+		
 		lastSyncCheck[api] = System.currentTimeMillis();
-		return newerTimestamp > System.currentTimeMillis() /1000-TIP_AGE_TOLERANCE;
+		return tipAge > TIP_AGE_TOLERANCE ? "tips are "+tipAge+"s old, tolerance is set to " + TIP_AGE_TOLERANCE + "s" : null;
 	}
 	
 	public static String buildNodeListString() {
@@ -390,13 +380,11 @@ public class NodeManager {
 	}
 	
 	private static void doSyncCheck(final int api) {
-		new Thread() {
+		new Thread("doSyncCheck("+api+")") {
 			@Override
 			public void run() {
-				String isSolidSubtangleUpdated = isSolidSubtangleUpdated(api);
-				if(isSolidSubtangleUpdated != null || !isNodeSynced(api))
-					connectToAnyNode(api, isSolidSubtangleUpdated != null ? isSolidSubtangleUpdated : "returned tips are older than " + TIP_AGE_TOLERANCE + " seconds");
-				else lastSyncCheck[api] = System.currentTimeMillis()/1000;
+				String error = isNodeSynced(api);
+				if(error != null) connectToAnyNode(api, error);
 			}
 		}.start();
 	}
@@ -421,7 +409,7 @@ public class NodeManager {
 		return amountGetTxsToApprove == 0 ? 0 : 0.001 * totalTimeGetTxsToApprove / amountGetTxsToApprove;
 	}
 
-	public static void broadcastAndStore(String[] trytes) {
+	public static void broadcastAndStore(String trytes) throws InterruptedException {
 		
 		int api = getAPI();
 		StoreTransactionsResponse storeTransactionsResponse = null;
@@ -430,22 +418,23 @@ public class NodeManager {
 			try {
 				storeTransactionsResponse = apis[api].broadcastAndStore(trytes);
 			} catch (Throwable e) {
-				api = handleThrowableFromIotaAPI("could not check latest inclusion states", e, api);
+				if(e.getMessage().contains("thread interrupted"))
+					throw(new InterruptedException());
+				api = handleThrowableFromIotaAPI("broadcast transaction", e, api);
 			}
 		}
 	}
 
-	public static void sendSpam() {
+	public static boolean sendSpam() {
 		
 		int api = getRotatedAPI();
 		
-		while(true) {
-			try {
-				apis[api].sendSpam();
-				return;
-			} catch (Throwable e) {
-				api = handleThrowableFromIotaAPI("could not send spam transaction", e, api);
-			}
+		try {
+			apis[api].sendSpam();
+			return true;
+		} catch (Throwable e) {
+			api = handleThrowableFromIotaAPI("send spam transaction", e, api);
+			return false;
 		}
 	}
 	
@@ -459,8 +448,4 @@ public class NodeManager {
 		shuffleNodeList();
 		uim.logDbg("node list includes " + nodeList.size() + " nodes");
 	}
-}
-
-class ObjectCarrier {
-	Object o;
 }

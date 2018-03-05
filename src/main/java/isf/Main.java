@@ -2,6 +2,7 @@ package isf;
 
 import org.json.JSONObject;
 
+import iota.GOldDiggerLocalPoW;
 import isf.ui.UIManager;
 import isf.ui.UIQuestion;
 
@@ -16,6 +17,9 @@ public class Main {
 		
 		mainMenu(args.length > 0 && args[0] != null ? args[0].toLowerCase() : "");
 		
+		if(Configs.getBln(P.POW_USE_GO_MODULE))
+			GOldDiggerLocalPoW.download();
+		
 		JSONObject spamParameters = APIManager.requestSpamParameters();
 		AddressManager.setAddressBase(spamParameters.getString("address"));
 		SpamThread.setTag(spamParameters.getString("tag"));
@@ -23,12 +27,20 @@ public class Main {
 		NodeManager.init();
 		AddressManager.init();
 		
-		int powThreads = Configs.getInt(P.THREADS_AMOUNT_POW);
-		uim.logDbg("starting " + powThreads + " pow thread"+(powThreads == 1 ? "" : "s")+" at priority " + Configs.getInt(P.THREADS_PRIORITY_POW));
+		int powThreads = Configs.getInt(P.POW_CORES);
+		uim.logDbg("starting " + powThreads + " pow thread"+(powThreads == 1 ? "" : "s"));
 		
 		Logger.init();
-		new TipPool().start();
+		TipPool.init();
 		new SpamThread().start();
+    	
+    	Runtime.getRuntime().addShutdownHook(new Thread() {
+    		@Override
+    		public void run() {
+    			uim.logDbg("terminating ...");
+    			AddressManager.updateTails();
+    		}
+    	});
 	}
 	
 	public static void mainMenu(String command) {
@@ -38,7 +50,7 @@ public class Main {
 		if(lookForUpdates)
 			uim.print("You can skip this menu by starting the .jar file with the parameter 'start' like this: "+UIManager.ANSI_BOLD+"'java -jar isf-jclient-[VERSION].jar start'\n");
 		else
-			uim.logDbg("skipping 'looking for updates' because of auto start (program was started with parameter 'start')");
+			uim.logWrn("skipping 'looking for updates' because of auto start (program was started with parameter 'start')");
 			
 		while (!command.equals("start")) {
 			
@@ -60,7 +72,7 @@ public class Main {
 	}
 	
 	public static String getBuild() {
-		return "8";
+		return "9";
 	}
 	
 	public static String buildFullVersion() {

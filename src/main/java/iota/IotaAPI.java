@@ -31,7 +31,7 @@ public class IotaAPI extends jota.IotaAPI {
 		transfers.add(new Transfer(AddressManager.getSpamAddress(), 0, message, SpamThread.getTag()));
 		List<Input> inputs = new ArrayList<Input>();
         
-        List<String> trytes = prepareTransfers("", SECURITY,  transfers, null, inputs, false);
+        List<String> trytes = prepareTransfers("", SECURITY, transfers, null, inputs, false);
 
         GetTransactionsToApproveResponse txs = TipPool.getTransactionsToApprove();
 		while(txs == null) txs = NodeManager.getTransactionsToApprove(NodeManager.getRotatedAPI());

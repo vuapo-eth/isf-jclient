@@ -6,11 +6,17 @@ public class TxBroadcaster {
 	
 	public static void queueTrytes(final GetAttachToTangleResponse res) {
 		
-		final TimeBomb broadcastBomb = new TimeBomb("broadcasting tips", 10) {
+		if(res.getTrytes()[0] == null) return;
+		
+		final TimeAbortCall broadcastBomb = new TimeAbortCall("broadcasting tips", 10) {
 			@Override
-			boolean onCall() {
-				NodeManager.broadcastAndStore(res.getTrytes());
-				return true;
+			public boolean onCall() {
+				try {
+					NodeManager.broadcastAndStore(res.getTrytes()[0]);
+					return true;
+				} catch (InterruptedException e) {
+					return false;
+				}
 			}
 		};
 		

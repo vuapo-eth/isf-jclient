@@ -2,6 +2,7 @@ package isf;
 
 import org.json.JSONObject;
 
+import iota.GOldDiggerLocalPoW;
 import isf.ui.UIManager;
 
 public class SpamThread extends Thread {
@@ -11,23 +12,24 @@ public class SpamThread extends Thread {
 	private static String tag = "IOTASPAM9DOT9COM99999999999";
 	private static SpamThread spamThread;
 	private static long timePauseStarted, totalPauses;
+	private static long timeStarted;
 	
 	private static final UIManager UIM = new UIManager("SpamThrd");
 	
-	private static final TimeBomb SPAM_BOMB = new TimeBomb("sending spam transaction", 1) {
+	private static final TimeAbortCall SPAM_BOMB = new TimeAbortCall("sending spam transaction", 1) {
 		@Override
-		boolean onCall() {
-			NodeManager.sendSpam();
-			return true;
+		public boolean onCall() {
+			return NodeManager.sendSpam();
 		}
 	};
 	
 	@Override
 	public void run() {
-		
-		TimeManager.addTask(new Task(120000, true) { @Override void onCall() { updateRemoteControl(); } });
-		
 		spamThread = this;
+		
+		GOldDiggerLocalPoW.start(Configs.getInt(P.POW_CORES));
+		TimeCaller.addTask(new Task(120000, true, false) { @Override void onCall() { updateRemoteControl(); } });
+		timeStarted = System.currentTimeMillis();
 		
 		while(true) {
 			
@@ -41,7 +43,7 @@ public class SpamThread extends Thread {
 				}
 			}
 			
-			SPAM_BOMB.call(60000);
+			SPAM_BOMB.call(Configs.getInt(P.POW_ABORT_TIME));
 		}
 	}
 	
@@ -89,5 +91,18 @@ public class SpamThread extends Thread {
 		while (s.length() < n)
 			s += '9';
 		return s;
+	}
+	
+	public static int getTotalSpam() {
+		return AddressManager.getSessionTxCount() + AddressManager.getPreSessionTransactions();
+	}
+	
+	public static double getSpamSpeed() {
+		int timeRunning = getTimeRunning();
+		return timeRunning > 0 ? 60000.0*AddressManager.getSessionTxCount()/timeRunning : 0;
+	}
+	
+	public static int getTimeRunning() {
+		return timeStarted == 0 ? 0 : (int) (System.currentTimeMillis() - timeStarted - getTotalPauses());
 	}
 }

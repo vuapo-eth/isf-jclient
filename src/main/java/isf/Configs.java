@@ -7,6 +7,7 @@ import java.util.Date;
 
 import org.ini4j.Wini;
 
+import iota.GOldDiggerLocalPoW;
 import isf.ui.UIManager;
 import isf.ui.UIQuestion;
 import isf.ui.UIQuestionInt;
@@ -33,9 +34,9 @@ public class Configs {
 		UIM.print("");
 		
 		loadWini();
+		askForColors();
 		askForNodes(true);
 		askForAccountData(true);
-		askForColors();
 		saveWini();
 	}
 	
@@ -93,6 +94,10 @@ public class Configs {
 	}
 	
 	private static void load() {
+		for(P p : P.values())
+			set(p, get(p));
+		saveWini();
+		
 		UIManager.toggleColors(getBln(P.LOG_COLORS_ENABLED));
 		
 		UIM.logDbg("loading configurations");
@@ -121,19 +126,18 @@ public class Configs {
 				
 				@Override
 				public boolean isAnswer(String str) {
-					return str.equals("account") || str.equals("nodes") || str.equals("threads") || str.equals("log") || str.equals("save");
+					return str.equals("account") || str.equals("nodes") || str.equals("spam") || str.equals("log") || str.equals("save");
 				}
 				
-			}.setQuestion("what parameter do you want to change? [account/nodes/threads/log | SAVE]"));
+			}.setQuestion("what parameter do you want to change? [spam/nodes/account/log | SAVE]"));
 
-			if(variable.equals("threads")) {
+			if(variable.equals("spam")) {
 				int amountOfCores = Runtime.getRuntime().availableProcessors();
 				UIQuestionInt.Q_THREADS_AMOUNT_POW.setRange(1, amountOfCores);
 				UIQuestionInt.Q_THREADS_AMOUNT_POW.setQuestion("how many threads do you want to use for performing Proof-of-Work? (your processor has "+amountOfCores+" cores) ")
 					.setRecommended(Math.max(1, amountOfCores-1));
-				set(P.THREADS_AMOUNT_POW, UIM.askQuestionInt(UIQuestionInt.Q_THREADS_AMOUNT_POW));
-				set(P.THREADS_PRIORITY_POW, UIM.askQuestionInt(UIQuestionInt.Q_THREADS_PRIORITY_POW));
-				set(P.THREADS_TIP_POOL_SIZE, UIM.askQuestionInt(UIQuestionInt.Q_THREADS_GTTARS_SIZE));
+				set(P.POW_CORES, UIM.askQuestionInt(UIQuestionInt.Q_THREADS_AMOUNT_POW));
+				set(P.POW_ABORT_TIME, UIM.askQuestionInt(UIQuestionInt.Q_POW_ABORT_TIME));
 			} else if(variable.equals("account")) {
 				isf_email = null;
 				isf_password = null;

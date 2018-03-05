@@ -59,7 +59,7 @@ public class UIManager {
 	
 	static {
 		System.setOut(DUMMY_STREAM);
-		setSystemErrorEnabled(false);
+		setSystemErrorEnabled(true);
 	}
 	
 	public void print(String line) {

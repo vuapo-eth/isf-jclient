@@ -128,6 +128,6 @@ For this you will need the GIT plugin (installation on UBUNTU via: `sudo apt-get
 
 Simply start the .jar to run the spamming tool:
 
-	$ java -jar target/isf-jclient-[VERSION].jar
+	$ java -jar isf-jclient-[VERSION].jar
 
 After starting it for the first time, you will be guided through the configuration. You can always stop the spammer using `CTRL+C`.

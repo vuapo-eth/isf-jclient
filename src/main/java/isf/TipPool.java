@@ -5,45 +5,63 @@ import java.util.Stack;
 
 import jota.dto.response.GetTransactionsToApproveResponse;
 
-public class TipPool extends Thread {
+public class TipPool {
 
 	private static Stack<GetTransactionsToApproveResponse> gttars = new Stack<GetTransactionsToApproveResponse>();
-	private static int gttarsLimit;
+	private static int gttarsLimit = 5;
 	
-	@Override
-	public void run() {
-		gttarsLimit = Configs.getInt(P.THREADS_TIP_POOL_SIZE);
-		while(true) {
-			for(int i = 0; i < Math.min(gttarsLimit-gttars.size(), NodeManager.getAmountOfAvailableAPIs()); i++) {
-				new Thread() {
-					@Override
-					public void run() {
-						
-						final int api = NodeManager.getRotatedAPI();
-						TimeBomb tb = new TimeBomb("requesting transactions to approve (tips)", -1) {
-							@Override
-							boolean onCall() {
-								GetTransactionsToApproveResponse gttar = NodeManager.getTransactionsToApprove(api);
-								if(gttar != null) gttars.push(gttar);
-								return gttar != null;
-							}
-						};
-						while(gttars.size() < gttarsLimit && tb.call(10));
-					}
-				}.start();
-			}
+	static final ObjectCarrier REQUESTED_TIPS = new ObjectCarrier(0);
+	static final ObjectCarrier REQUIRED_TIPS = new ObjectCarrier(gttarsLimit);
+	
+	public static void init() {
 			
-			try {
-				Thread.sleep(12000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+		for(int i = 0; i < NodeManager.getAmountOfAvailableAPIs(); i++) {
+			final int api = i;
+			
+			new Thread() {
+				@Override
+				public void run() {
+					
+					TimeAbortCall tb = new TimeAbortCall("requesting transactions to approve (tips)", 10) {
+						@Override
+						public boolean onCall() {
+							GetTransactionsToApproveResponse gttar = NodeManager.getTransactionsToApprove(api);
+							if(gttar != null) {
+								gttars.push(gttar);
+								REQUIRED_TIPS.o = gttarsLimit-gttars.size();
+							}
+							return gttar != null;
+						}
+
+						@Override
+						public void onNotToleratedFail(String failMsg) {
+							NodeManager.connectToAnyNode(api, failMsg);
+						}
+					};
+					
+					while(true) {
+						while((int)REQUESTED_TIPS.o < (int)REQUIRED_TIPS.o) {
+							synchronized (REQUIRED_TIPS) { REQUESTED_TIPS.o = ((int)REQUESTED_TIPS.o)+1; }
+							if(!tb.call(6));
+							synchronized (REQUIRED_TIPS) { REQUESTED_TIPS.o = ((int)REQUESTED_TIPS.o)-1; }
+						}
+						
+						do {
+							synchronized (REQUIRED_TIPS) { try { REQUIRED_TIPS.wait(); } catch (InterruptedException e) { } }
+						} while(!NodeManager.isAvailable(api));
+					}
+				}
+			}.start();
 		}
 	}
 	
 	public static GetTransactionsToApproveResponse getTransactionsToApprove() {
 		try {
-			return gttars.pop();
+			GetTransactionsToApproveResponse response = gttars.pop();
+			gttarsLimit = Math.max((int)Math.ceil(SpamThread.getSpamSpeed()/5), 5);
+			REQUIRED_TIPS.o = gttarsLimit-gttars.size();
+			if((int)REQUIRED_TIPS.o > (int)REQUESTED_TIPS.o) synchronized (REQUIRED_TIPS) { REQUIRED_TIPS.notifyAll(); }
+			return response;
 		} catch(EmptyStackException e) {
 			return null;
 		}

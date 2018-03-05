@@ -6,7 +6,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import iota.GoldDiggerLocalPoW;
+import iota.GOldDiggerLocalPoW;
 import isf.ui.UIManager;
 
 public class Logger {
@@ -14,22 +14,20 @@ public class Logger {
 	private static final UIManager uim = new UIManager("Logger");
 			
 	private static double priceUsd = 0;
-	private static long timeStarted;
 	private static int balance = 0, currentReward = 0;
 	
 	public static void init() {
 
-		timeStarted = System.currentTimeMillis();
 		int logInterval = Configs.getInt(P.LOG_INTERVAL);
 		int performanceReportInterval = Configs.getInt(P.LOG_PERFORMANCE_REPORT_INTERVAL);
 		uim.logDbg("starting logger, logs will appear in " + logInterval + "s intervals");
 		
 		updateBalance();
 		updateIotaTicker();
-		TimeManager.addTask(new Task(1800000, false) { @Override void onCall() { updateIotaTicker(); } });
-		TimeManager.addTask(new Task(120000, false) { @Override void onCall() { updateBalance(); } });
-		TimeManager.addTask(new Task(logInterval * 1000, true) { @Override void onCall() { log(); } });
-		TimeManager.addTask(new Task(performanceReportInterval * 1000, false) { @Override void onCall() { performanceReport(); } });
+		TimeCaller.addTask(new Task(1800000, false, false) { @Override void onCall() { updateIotaTicker(); } });
+		TimeCaller.addTask(new Task(120000, false, false) { @Override void onCall() { updateBalance(); } });
+		TimeCaller.addTask(new Task(logInterval * 1000, true, false) { @Override void onCall() { log(); } });
+		TimeCaller.addTask(new Task(performanceReportInterval * 1000, false, false) { @Override void onCall() { performanceReport(); } });
 	}
 	
 	private static void updateBalance() {
@@ -42,7 +40,7 @@ public class Logger {
 
 		if(SpamThread.isPaused()) return;
 		
-		long timeRunning = getTimeRunning();
+		long timeRunning = SpamThread.getTimeRunning();
 		int confirmedSpam = getConfirmedSpam(), totalSpam = AddressManager.getTailsTotalTxs(-1);
 
 		DecimalFormat df = new DecimalFormat("##0.00");
@@ -57,11 +55,9 @@ public class Logger {
 				+ ":" + (min%60 < 10 ? "0" : "") + min%60
 				+ ":" + (sec%60 < 10 ? "0" : "") + sec%60;
 		
-		double miotaPerMonth = (30*24*60*getSpamSpeed())*currentReward/1e6*AddressManager.getTailsConfirmRate(15)/100;
+		double spamSpeed = SpamThread.getSpamSpeed();
 		
-		String speed = "SPEED " + UIManager.padLeft(df.format(getSpamSpeed()), 5) + " txs/min | ";
-		if(SpamThread.isPaused())
-			speed = "> REMOTELY PAUSED < | ";
+		double miotaPerMonth = (30*24*60*spamSpeed)*currentReward/1e6*AddressManager.getTailsConfirmRate(15)/100;
 		
 		String balanceString;
 		if(balance >= 1e6) balanceString = (int)(balance/1e6) + " Mi";
@@ -70,8 +66,8 @@ public class Logger {
 		balanceString = UIManager.padLeft(balanceString, 6);
 		
 		uim.logInf("TIME " + UIManager.padLeft(timeString + " | ", 13)
-		+ "SPAM " + UIManager.padLeft(getTotalSpam()+"", 7) + " txs | "
-		+  speed
+		+ "SPAM " + UIManager.padLeft(SpamThread.getTotalSpam()+"", 7) + " txs | "
+		+ "SPEED " + UIManager.padLeft(df.format(spamSpeed > 60 ? spamSpeed / 60 : spamSpeed), 5) + (spamSpeed > 60 ? " tps" : " txs/min")+" | "
 		+ "CNFMD " + UIManager.padLeft(confirmedSpam
 				+ (totalSpam < 1000 ? UIManager.padRight("/"+totalSpam, 4) : "")
 				+ " txs ("+df2.format(getConfirmationRate())+"%)", 20) + " | "
@@ -81,11 +77,11 @@ public class Logger {
 	}
 	
 	private static void performanceReport() {
+		if(SpamThread.isPaused()) return;
 		DecimalFormat df2 = new DecimalFormat("#00.00");
-		double powPercentage = 100.0 * GoldDiggerLocalPoW.getAvgPoWTime() * getSpamSpeed() / 60;
-		uim.logInf(">>> PERFORMANCE REPORT >>>   PoW: " + df2.format(GoldDiggerLocalPoW.getAvgPoWTime()) + "s ("
-				+(powPercentage > 95 ? UIManager.ANSI_GREEN : (powPercentage < 75) ? UIManager.ANSI_RED : "")
-				+df2.format(powPercentage)+"%"+UIManager.ANSI_RESET+")"
+		double powPercentage = 100.0 * GOldDiggerLocalPoW.getAvgPoWTime() * SpamThread.getSpamSpeed() / 60;
+		uim.logInf(">>> PERFORMANCE REPORT >>>   PoW: " + df2.format(GOldDiggerLocalPoW.getAvgPoWTime()) + "s"
+				+" | " + (powPercentage > 95 ? UIManager.ANSI_GREEN : (powPercentage < 75) ? UIManager.ANSI_RED : "") +"EFFICIENCY: "+df2.format(powPercentage)+"%"+UIManager.ANSI_RESET
 				+ " | GetTips: "+df2.format(NodeManager.getAvgTxsToApproveTime())+"s | TipPool: "+
 			(TipPool.gttarsQueueSize() == 0 ? UIManager.ANSI_RED : "")+TipPool.gttarsQueueSize()+UIManager.ANSI_RESET+"/"+TipPool.gttarsLimit()+"");
 	}
@@ -124,18 +120,5 @@ public class Logger {
 	
 	private static int getConfirmedSpam() {
 		return AddressManager.getTailsConfirmedTxs(-1);
-	}
-	
-	private static int getTimeRunning() {
-		return (int) (System.currentTimeMillis() - timeStarted - SpamThread.getTotalPauses());
-	}
-	
-	private static int getTotalSpam() {
-		return AddressManager.getSessionTxCount() + AddressManager.getPreSessionTransactions();
-	}
-	
-	private static double getSpamSpeed() {
-		int timeRunning = getTimeRunning();
-		return timeRunning > 0 ? 60000.0*AddressManager.getSessionTxCount()/timeRunning : 0;
 	}
 }

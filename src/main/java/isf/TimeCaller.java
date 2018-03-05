@@ -2,12 +2,12 @@ package isf;
 
 import java.util.ArrayList;
 
-public class TimeManager extends Thread {
+public class TimeCaller extends Thread {
 
 	private final static ArrayList<Task> TASKS = new ArrayList<Task>();
-	private final static TimeManager TM = new TimeManager();
+	private final static TimeCaller TM = new TimeCaller();
 	
-	public TimeManager() {
+	public TimeCaller() {
 		start();
 	}
 	
@@ -49,9 +49,12 @@ abstract class Task {
 	
 	private long nextCallTimeStamp;
 	private final long interval;
+	private final boolean queueCalls;
+	private int openCalls;
 	
-	Task(long interval, boolean callImmediately) {
+	Task(long interval, boolean callImmediately, boolean queueCalls) {
 		this.interval = interval;
+		this.queueCalls = queueCalls;
 		if(callImmediately) call();
 		nextCallTimeStamp = System.currentTimeMillis() + interval;
 	}
@@ -64,10 +67,13 @@ abstract class Task {
 	
 	void call() {
 		nextCallTimeStamp += interval;
+		if(!queueCalls && openCalls > 0) return;
 		
 		new Thread() {
 			public void run() {
+				openCalls++;
 				onCall();
+				openCalls--;
 			};
 		}.start();
 	}

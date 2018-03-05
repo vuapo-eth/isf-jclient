@@ -3,23 +3,30 @@ package isf;
 import isf.ui.UIManager;
 
 public class Tail {
-	private int timestamp, confirmedTxs, totalTxs;
+	private long timestamp;
+	private int confirmedTxs, totalTxs;
 	private final String trytes;
-	private String milestone;
-	
-	public Tail(String line) {
-		String[] par = line.split("\\|");
-		trytes = par[0];
-		timestamp = Integer.parseInt(par[1]);
-		confirmedTxs = Integer.parseInt(par[2]);
-		totalTxs = Integer.parseInt(par[3]);
-		milestone = par[4];
+	private boolean lastCheckCompleted;
+
+	public Tail(String trytes, long timestamp, int confirmedTxs, int totalTxs, boolean lastCheckCompleted) {
+		this.trytes = trytes;
+		this.timestamp = timestamp;
+		this.confirmedTxs = confirmedTxs;
+		this.totalTxs = totalTxs;
+		this.lastCheckCompleted = lastCheckCompleted;
+	}
+
+	public Tail(String[] par) {
+		this.trytes = par[0];
+		this.timestamp = Long.parseLong(par[1]);
+		this.confirmedTxs = Integer.parseInt(par[2]);
+		this.totalTxs = Integer.parseInt(par[3]);
+		this.lastCheckCompleted = Boolean.parseBoolean(par[4]);
 	}
 	
 	public void update() {
 		String[] hashes = NodeManager.findTransactionsByAddress(AddressManager.getAddressBase() + getTrytes());
-		String latestMilestone = NodeManager.getLatestMilestone();
-		boolean[] states = NodeManager.getInclusionStates(hashes, latestMilestone);
+		boolean[] states = NodeManager.getLatestInclusion(hashes);
 		
 		if(states.length == 0)
 			return;
@@ -28,22 +35,22 @@ public class Tail {
 		for(boolean state : states)	if(state) confirmedTxs++;
 		
 		setTotalTxs(states.length);
-		setMilestone(latestMilestone);
 		setConfirmedTxs(confirmedTxs);
 	}
 	
 	public String toString() {
-		return trytes + "|" + UIManager.padLeft(timestamp+"", 10)
-		+ "|" + UIManager.padLeft(confirmedTxs+"", 4)
-		+ "|" + UIManager.padLeft(totalTxs+"", 4)
-		+ "|" + milestone;
+		return trytes
+			+ "|" + UIManager.padLeft(timestamp+"", 10)
+			+ "|" + UIManager.padLeft(confirmedTxs+"", 4)
+			+ "|" + UIManager.padLeft(totalTxs+"", 4)
+			+ "|" + lastCheckCompleted;
 	}
 	
-	public int getTimestamp() {
+	public long getTimestamp() {
 		return timestamp;
 	}
 	
-	public void setTimestamp(int timestamp) {
+	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
 	}
 
@@ -67,11 +74,11 @@ public class Tail {
 		return trytes;
 	}
 
-	public String getMilestone() {
-		return milestone;
+	public boolean isLastCheckCompleted() {
+		return lastCheckCompleted;
 	}
-
-	public void setMilestone(String milestone) {
-		this.milestone = milestone;
+	
+	public void setLastCheckCompleted(boolean lastCheckCompleted) {
+		this.lastCheckCompleted = lastCheckCompleted;
 	}
 }

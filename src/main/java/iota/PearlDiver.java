@@ -2,15 +2,11 @@ package iota;
 
 import static jota.pow.JCurl.NUMBER_OF_ROUNDSP81;
 
-import isf.Configs;
-import isf.P;
-
-
 /**
  * (c) 2016 Come-from-Beyond
  * EDIT by microhash: threading
  */
-public class GoldDigger {
+public class PearlDiver {
 
     enum State {
         RUNNING,
@@ -137,8 +133,7 @@ public class GoldDigger {
             final int threadIndex = numberOfThreads;
             Thread worker = (new Thread() { public void run() {
 
-            	int threadsPriority = Configs.getInt(P.THREADS_PRIORITY_POW);
-            	setPriority(threadsPriority == 1 ? Thread.MIN_PRIORITY : threadsPriority == 3 ? Thread.MAX_PRIORITY : Thread.NORM_PRIORITY);
+            	setPriority(Thread.MAX_PRIORITY);
             	
                 final long[] midCurlStateCopyLow = new long[CURL_STATE_LENGTH], midCurlStateCopyHigh = new long[CURL_STATE_LENGTH];
                 System.arraycopy(midCurlStateLow, 0, midCurlStateCopyLow, 0, CURL_STATE_LENGTH);
@@ -152,7 +147,7 @@ public class GoldDigger {
                 final long[] curlStateLow = new long[CURL_STATE_LENGTH], curlStateHigh = new long[CURL_STATE_LENGTH];
                 final long[] curlScratchpadLow = new long[CURL_STATE_LENGTH], curlScratchpadHigh = new long[CURL_STATE_LENGTH];
                 long mask, outMask = 1;
-                while (state == GoldDigger.State.RUNNING) {
+                while (state == PearlDiver.State.RUNNING) {
 
                     increment(midCurlStateCopyLow, midCurlStateCopyHigh, 162 + (CURL_HASH_LENGTH / 9) * 2,
                             CURL_HASH_LENGTH);
@@ -174,8 +169,8 @@ public class GoldDigger {
                     }
 
                     synchronized (syncObj) {
-                        if (state == GoldDigger.State.RUNNING) {
-                            state = GoldDigger.State.COMPLETED;
+                        if (state == PearlDiver.State.RUNNING) {
+                            state = PearlDiver.State.COMPLETED;
                             while ((outMask & mask) == 0) {
                                 outMask <<= 1;
                             }
