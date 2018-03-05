@@ -18,9 +18,9 @@ If you have never heard about Maven, you should stick with this rather simple "i
 
 If you prefer to compile the .jar file yourself and know how to use a terminal, use this guide. Just follow through the steps.
 
-## 1. GET THE REQUIREMENTS (JRE & MAVEN)
+## 1. GET THE REQUIREMENTS (JDK & MAVEN)
 
-Please make sure you have the **JRE** (Java Runtime Environment) and **Maven** installed. Here is how to do that:
+Please make sure you have the **JDK** (Java Development Kit) and **Maven** installed. Here is how to do that:
 
 ### UBUNTU
 
@@ -131,3 +131,12 @@ Simply start the .jar to run the spamming tool:
 	$ java -jar isf-jclient-[VERSION].jar
 
 After starting it for the first time, you will be guided through the configuration. You can always stop the spammer using `CTRL+C`.
+
+# COMPILING POW.GO
+
+If you want to compile the GO proof-of-work module yourself instead of downloading it from the releases, here is how to do it:
+
+1. [install go](https://golang.org/doc/install)
+2. install the official iota go library [GIOTA](https://github.com/iotaledger/giota#install): `go get -u github.com/iotaledger/giota`
+3. compile the pow.go file: `go build pow.go`
+4. rename the compiled into: `pow_[first three letters of os name]_[os architecture]`, examples are: `pow_lin_amd64` or `pow_win_386.exe`
