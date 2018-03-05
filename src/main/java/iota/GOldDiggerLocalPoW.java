@@ -51,7 +51,7 @@ public class GOldDiggerLocalPoW implements IotaLocalPoW {
 		perms.add(PosixFilePermission.OWNER_EXECUTE);
 		
 		if(UIM.askForBoolean("do you want to download an optimized GO proof-of-work module and increase your spam performance by approx. 50-100%?")) {
-			String downloadUrl = "https://github.com/mikrohash/isf-jclient/releases/download/v1.0.8/"+powFileName;
+			String downloadUrl = "https://github.com/mikrohash/isf-jclient/releases/download/v1.0.9/"+powFileName;
 			
     	    try {
     			UIM.logInf("downloading " + powFileName + " from " + downloadUrl);
