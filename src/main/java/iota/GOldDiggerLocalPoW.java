@@ -39,7 +39,7 @@ public class GOldDiggerLocalPoW implements IotaLocalPoW {
 
 		final String os = System.getProperty("os.name").toLowerCase();
 		final String arch = System.getProperty("os.arch").toLowerCase();
-		final String fileExtension = os.equals("win") ? ".exe" : "";
+		final String fileExtension = os.substring(0, 3).equals("win") ? ".exe" : "";
 		final String powFileName = "pow_"+os.substring(0, 3)+"_"+arch+fileExtension;
     	File targetFile = new File(powFileName);
     	
