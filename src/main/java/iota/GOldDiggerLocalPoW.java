@@ -69,7 +69,10 @@ public class GOldDiggerLocalPoW implements IotaLocalPoW {
     	    	targetFile.createNewFile();
     			Files.copy(in, targetFile.toPath(), (CopyOption)StandardCopyOption.REPLACE_EXISTING);
     			UIM.logInf("download complete");
-				Files.setPosixFilePermissions(targetFile.toPath(), perms);
+    			
+    			try {
+    				Files.setPosixFilePermissions(targetFile.toPath(), perms);
+    			} catch(UnsupportedOperationException e) { }
     		} catch (IOException e) {
     			UIM.logErr("could not download proof-of-work module, will use low-performing java proof-of-work module instead");
     			UIM.logException(e, false);
@@ -89,7 +92,7 @@ public class GOldDiggerLocalPoW implements IotaLocalPoW {
 			
 		final String os = System.getProperty("os.name").toLowerCase();
 		final String arch = System.getProperty("os.arch").toLowerCase();
-		final String fileExtension = os.equals("win") ? ".exe" : "";
+		final String fileExtension = os.substring(0, 3).equals("win") ? ".exe" : "";
 		final String powFileName = "pow_"+os.substring(0, 3)+"_"+arch+fileExtension;
 		
     	goPowAvailable = FileManager.exists(powFileName);
