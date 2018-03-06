@@ -7,7 +7,6 @@ import java.util.Date;
 
 import org.ini4j.Wini;
 
-import iota.GOldDiggerLocalPoW;
 import isf.ui.UIManager;
 import isf.ui.UIQuestion;
 import isf.ui.UIQuestionInt;
