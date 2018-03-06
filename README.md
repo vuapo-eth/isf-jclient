@@ -42,7 +42,7 @@ credits to [this guide](https://medium.com/@scott.tudd/an-almost-complete-guide-
 
 ### WINDOWS
 
-Please install the **JDK** from [oracle.com](http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html). You can check whether it works by executing `java -version` in your console. After that, proceed to install **Maven**:
+Please install the **JDK** from [oracle.com](http://www.oracle.com/technetwork/java/javase/downloads/jdk9-downloads-3848520.html). You can check whether it works by executing `java -version` in your console. After that, proceed to install **Maven**:
 
 1. download the latest version of Maven from [maven.apache.org/download.cgi](https://maven.apache.org/download.cgi)
 
