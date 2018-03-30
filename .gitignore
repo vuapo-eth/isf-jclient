@@ -4,3 +4,8 @@
 /logs/
 *.jar
 /bin/
+*.exe
+pow_lin_amd64
+*.iml
+*.cfg
+_config.yml

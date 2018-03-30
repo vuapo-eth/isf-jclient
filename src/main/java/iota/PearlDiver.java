@@ -32,8 +32,7 @@ public class PearlDiver {
         }
     }
 
-    public synchronized boolean search(final int[] transactionTrits, final int minWeightMagnitude,
-                                       int numberOfThreads) {
+    public synchronized boolean search(final int[] transactionTrits, final int minWeightMagnitude, int numberOfThreads) {
 
         if (transactionTrits.length != TRANSACTION_LENGTH) {
             throw new RuntimeException(

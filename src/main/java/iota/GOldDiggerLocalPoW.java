@@ -17,76 +17,118 @@ import java.util.Set;
 import cfb.pearldiver.PearlDiver;
 import isf.Configs;
 import isf.FileManager;
-import isf.ObjectCarrier;
+import isf.logic.ObjectWrapper;
 import isf.P;
+import isf.ui.R;
 import isf.ui.UIManager;
 import jota.IotaLocalPoW;
 import jota.utils.Converter;
 
-
 public class GOldDiggerLocalPoW implements IotaLocalPoW {
 
+    // logging
+    private static final UIManager UIM = new UIManager("GOldDggr");
+
+    // stats
 	private static int amountPoW = 0;
 	private static long totalTimePoW = 0;
-	private static final ObjectCarrier oc = new ObjectCarrier(null);
-	private static final ObjectCarrier success = new ObjectCarrier(false);
-	private static final ObjectCarrier scannerOpen = new ObjectCarrier(false);
-	private static boolean goPowAvailable;
-	private static final UIManager UIM = new UIManager("GldDiggr");
-    PearlDiver pearlDiver = new PearlDiver();
 
-    public static void download() {
+	// object wrappers for thread communication
+	private static final ObjectWrapper powTrytes = new ObjectWrapper(null);
+	private static final ObjectWrapper powSuccess = new ObjectWrapper(false);
+	private static final ObjectWrapper scannerOpen = new ObjectWrapper(false);
 
-		final String os = System.getProperty("os.name").toLowerCase();
-		final String arch = System.getProperty("os.arch").toLowerCase();
-		final String fileExtension = os.substring(0, 3).equals("win") ? ".exe" : "";
-		final String powFileName = "pow_"+os.substring(0, 3)+"_"+arch+fileExtension;
-    	File targetFile = new File(powFileName);
+	// pow
+	private static boolean goPowAvailable = false;
+    private static final PearlDiver PEARL_DIVER = new PearlDiver();
+    private static final File POW_FILE = new File(determinePowFileName());
+
+    @Override
+    public String performPoW(String trytes, int minWeightMagnitude) {
+        long timeStarted = System.currentTimeMillis();
+        String nonced = goPowAvailable ? goPow(trytes) : javaPow(trytes, minWeightMagnitude);
+        totalTimePoW += System.currentTimeMillis() - timeStarted;
+        amountPoW++;
+        return nonced;
+    }
+
+    /**
+     * performs proof-of-work on trytes using java PearlDiver implementation (low performance)
+     * @param preparedTrytes trytes before pow
+     * @return trytes after pow
+     * */
+    private String javaPow(String preparedTrytes, int minWeightMagnitude) {
+        int[] trits = Converter.trits(preparedTrytes);
+        if (!PEARL_DIVER.search(trits, minWeightMagnitude, Configs.getInt(P.POW_CORES)))
+            throw new IllegalStateException(R.STR.getString("pow_abort"));
+        return Converter.trytes(trits);
+    }
+
+    /**
+     * performs proof-of-work on trytes using giota pow implementation (high performance)
+     * @param preparedTrytes trytes before pow
+     * @return trytes after pow
+     * */
+    private static String goPow(String preparedTrytes) {
+        powTrytes.o = preparedTrytes;
+        powSuccess.o = false;
+
+        synchronized (powTrytes) {
+            powTrytes.notify();
+            try { powTrytes.wait(); } catch (InterruptedException e) { }
+        }
+        return (boolean) powSuccess.o ? (String) powTrytes.o : null;
+    }
+
+    public static void downloadPowIfNonExistent() {
     	
-    	if(targetFile.exists()) return;
-		
-		Set<PosixFilePermission> perms = new HashSet<>();
-		perms.add(PosixFilePermission.OWNER_READ);
-		perms.add(PosixFilePermission.OWNER_WRITE);
-		perms.add(PosixFilePermission.OWNER_EXECUTE);
-		
-		if(UIM.askForBoolean("do you want to download an optimized GO proof-of-work module and increase your spam performance by approx. 50-100%?")) {
-			String downloadUrl = "https://github.com/mikrohash/isf-jclient/releases/download/v1.0.9/"+powFileName;
-			
-    	    try {
-    			UIM.logInf("downloading " + powFileName + " from " + downloadUrl);
-    			URL website = new URL(downloadUrl);
-    			InputStream in = null;
-    			
-    			try {
-    				in = website.openStream();
-    			} catch (FileNotFoundException e) {
-    				UIM.logWrn("Unfortunately, the GO pow module for your system '"+os+"-"+arch+"' is not available. Please contact us via contact@iotaspam.com, so we can add it to our collection. If you want to compile it yourself, you will find instructions README.md");
-    				UIM.logWrn("could not download proof-of-work module, will use low-performing java proof-of-work module instead");
-        			return;
-    			}
+    	if(POW_FILE.exists()) return;
 
-    	    	targetFile.createNewFile();
-    			Files.copy(in, targetFile.toPath(), (CopyOption)StandardCopyOption.REPLACE_EXISTING);
-    			UIM.logInf("download complete");
-    			
-    			try {
-    				Files.setPosixFilePermissions(targetFile.toPath(), perms);
-    			} catch(UnsupportedOperationException e) { }
-    		} catch (IOException e) {
-    			UIM.logErr("could not download proof-of-work module, will use low-performing java proof-of-work module instead");
-    			UIM.logException(e, false);
-    			targetFile.delete();
-    		}
-		} else {
-			UIM.logWrn("alright, since you don't want to optimize your spam, we will use the low-performing java proof-of-work module instead");
-		}
+    	boolean goModuleWantedByUser = UIM.askForBoolean(R.STR.getString("pow_go_wanted_question"));
+		if(!goModuleWantedByUser) {
+            UIM.logErr(R.STR.getString("pow_go_user_refused_download"));
+            return;
+        }
+
+        final String downloadUrl = R.URL.getString("go_module_download")+POW_FILE.getName();
+
+        try {
+            UIM.logInf("downloading " + POW_FILE.getName() + " from " + downloadUrl + " ...");
+            URL website = new URL(downloadUrl);
+            InputStream in = null;
+
+            try {
+                in = website.openStream();
+            } catch (FileNotFoundException e) {
+                UIM.logWrn(String.format(R.STR.getString("pow_go_not_available"), System.getProperty("os.name")+", "+System.getProperty("os.arch")));
+                UIM.logErr(R.STR.getString("pow_go_download_failed"));
+                return;
+            }
+
+            POW_FILE.createNewFile();
+            Files.copy(in, POW_FILE.toPath(), (CopyOption)StandardCopyOption.REPLACE_EXISTING);
+            UIM.logInf(R.STR.getString("pow_go_download_success"));
+            setPermissions();
+        } catch (IOException e) {
+            UIM.logErr(R.STR.getString("pow_go_download_failed"));
+            UIM.logException(e, false);
+            POW_FILE.delete();
+        }
+    }
+
+    /**
+     * gives pow file permissions necessary to be executed on some OS
+     * */
+    private static void setPermissions() {
+        Set<PosixFilePermission> perms = new HashSet<>();
+        perms.add(PosixFilePermission.OWNER_EXECUTE);
+        try { Files.setPosixFilePermissions(POW_FILE.toPath(), perms); } catch(IOException | UnsupportedOperationException e) { }
     }
     
     public static void start(int threads) {
 
 		if(!Configs.getBln(P.POW_USE_GO_MODULE)) {
-			UIM.logWrn("since you don't want to use the optimized GO pow module, we will use the low-performing java pow module instead");
+			UIM.logWrn(R.STR.getString("pow_go_user_refused_use"));
 			return;
 		}
 			
@@ -94,18 +136,17 @@ public class GOldDiggerLocalPoW implements IotaLocalPoW {
 		final String arch = System.getProperty("os.arch").toLowerCase();
 		final String fileExtension = os.substring(0, 3).equals("win") ? ".exe" : "";
 		final String powFileName = "pow_"+os.substring(0, 3)+"_"+arch+fileExtension;
-		
+
     	goPowAvailable = FileManager.exists(powFileName);
     	
     	if(!goPowAvailable) {
-			UIM.logWrn("could not find the optimized GO pow module, will use the low-performing java pow module instead");
+			UIM.logWrn(R.STR.getString("pow_go_file_missing"));
     		return;
     	}
     	
         Process proc = null;
         
 		try {
-	    	//File targetFile = new File(powFileName);
 			proc = Runtime.getRuntime().exec("./"+powFileName);
 		} catch (IOException e) {
 			UIM.logException(e, false);
@@ -123,13 +164,16 @@ public class GOldDiggerLocalPoW implements IotaLocalPoW {
 			out.flush();
 			
 			String powName = s.hasNext() ? s.next().replace("\n", "") : "";
-			UIM.logInf("Using optimal proof-of-work method for this machine: " + powName);
+			if(powName.equals("PowGo"))
+			    UIM.logWrn(R.STR.getString("pow_go_compilation_incomplete"));
+			else
+			    UIM.logInf(R.STR.getString("pow_go_optimal_method") + powName);
 			
 		} catch (IOException e) {
 			UIM.logException(e, false);
 		}
         
-        oc.o = "";
+        powTrytes.o = "";
     	
     	final Thread t = new Thread() {
 	        
@@ -137,22 +181,18 @@ public class GOldDiggerLocalPoW implements IotaLocalPoW {
     	        
     	        while(true) {
     	        	
-    	        	synchronized (oc) { try { oc.wait(); } catch (InterruptedException e) { break; } }
+    	        	synchronized (powTrytes) { try { powTrytes.wait(); } catch (InterruptedException e) { break; } }
     	        	
         	        try {
-        				out.write((oc.o+"\n").getBytes());
+        				out.write((powTrytes.o+"\n").getBytes());
         				out.flush();
-        			} catch (IOException e) {
-        				UIM.logDbg("Failed to communicate with pow file: " + e.getMessage());
+                        powTrytes.o = s.hasNext() ? s.next().replace("\n", "") : null;
+                        powSuccess.o = true;
+        			} catch (IOException | IllegalStateException e) {
+        				UIM.logDbg(R.STR.getString("pow_go_communication_failed") + e.getMessage());
         			}
-        	        
-        	        try {
-            	        oc.o = s.hasNext() ? s.next().replace("\n", "") : null;
-            	        success.o = true;
-        	        } catch (IllegalStateException e) {
-        				UIM.logDbg("Failed to communicate with pow file: " + e.getMessage());
-        	        }
-        	        synchronized (oc) { oc.notify(); }
+
+        	        synchronized (powTrytes) { powTrytes.notify(); }
     	        }
     		}
     	};
@@ -168,31 +208,11 @@ public class GOldDiggerLocalPoW implements IotaLocalPoW {
     	});
     }
 
-    private String javaPow(String trytes, int minWeightMagnitude) {
-        int[] trits = Converter.trits(trytes);
-        if (!pearlDiver.search(trits, minWeightMagnitude, Configs.getInt(P.POW_CORES)))
-            throw new IllegalStateException("PoW aborted: took too long");
-        return Converter.trytes(trits);
-    }
-    
-    public String performPoW(String trytes, int minWeightMagnitude) {
-        long timeStarted = System.currentTimeMillis();
-        String nonced = goPowAvailable ? goPow(trytes) : javaPow(trytes, minWeightMagnitude);
-        totalTimePoW += System.currentTimeMillis() - timeStarted;
-        amountPoW++;
-    	return nonced;
-    }
-    
-    public static String goPow(String trytes) {
-    	oc.o = trytes;
-    	success.o = false;
-    	
-    	synchronized (oc) {
-    		oc.notify();
-    		
-			try { oc.wait(); } catch (InterruptedException e) { }
-		}
-    	return (boolean)success.o ? (String)oc.o : null;
+    private static String determinePowFileName() {
+        final String os = System.getProperty("os.name").toLowerCase();
+        final String arch = System.getProperty("os.arch").toLowerCase();
+        final String fileExtension = os.substring(0, 3).equals("win") ? ".exe" : "";
+        return "pow_"+os.substring(0, 3)+"_"+arch+fileExtension;
     }
     
     public static double getAvgPoWTime() {

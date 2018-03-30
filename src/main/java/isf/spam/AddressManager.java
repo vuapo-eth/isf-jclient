@@ -1,12 +1,17 @@
-package isf;
+package isf.spam;
 
 import java.util.ArrayList;
+import java.util.regex.Pattern;
 
+import isf.*;
+import isf.logic.CronJob;
+import isf.logic.CronJobManager;
 import isf.ui.UIManager;
+import org.apache.commons.lang3.StringUtils;
 
 public class AddressManager {
 
-	private static final UIManager uim = new UIManager("AddrMngr");
+	private static final UIManager UIM = new UIManager("AddrMngr");
 	
 	public static final String DIR = "addr";
 
@@ -20,16 +25,19 @@ public class AddressManager {
 	private static int sessionTxCount = 0;
 	
 	public static void init() {
-		
+
+	    if(!Main.isInOnlineMode())
+	        return;
+
 		if(FileManager.exists(DIR+"/"+addressBase+".dat"))
 			loadAddresses();
 		else {
 			FileManager.mkdirs(DIR);
 			createNewAddressTail();
 		}
-		
-		TimeCaller.addTask(new Task(300000, true, false) { @Override void onCall() { AddressManager.getTail().update(); } });
-		TimeCaller.addTask(new Task(60000, true, false) { @Override void onCall() { AddressManager.updateTails(); } });
+
+		CronJobManager.addCronJob(new CronJob(300000, true, false) { @Override public void onCall() { AddressManager.getTail().update(); } });
+		CronJobManager.addCronJob(new CronJob(60000, true, false) { @Override public void onCall() { AddressManager.updateTails(); } });
 	}
 	
 	public static void setAddressBase(String addressBase) {
@@ -49,10 +57,13 @@ public class AddressManager {
 	}
 	
 	public static void updateTails() {
-		
+
+	    if(!Main.isInOnlineMode())
+	        return;
+
 		boolean anythingChanged = false;
 		for(int i = 0; i < tails.size()-1; i++) {
-			Tail tail = tails.get(i);
+			final Tail tail = tails.get(i);
 			if(tail.getTimestamp() < System.currentTimeMillis()/1000-DURATION_UNTIL_CHECKING_TAIL && !tail.isLastCheckCompleted()) {
 				tail.update();
 				tail.setLastCheckCompleted(true);
@@ -64,6 +75,9 @@ public class AddressManager {
 	}
 	
 	public static void writeTailsIntoFile() {
+		if(!Main.isInOnlineMode())
+		    return;
+
 		StringBuilder s = new StringBuilder();
 		for(int i = 0; i < tails.size(); i++)
 			s.append(s.toString().length() > 0 ? "\n" : "").append(tails.get(i).toString());
@@ -84,8 +98,12 @@ public class AddressManager {
 	}
 	
 	public static String getSpamAddress() {
+	    if(!Main.isInOnlineMode()) {
+	        return addressBase;
+        }
+
 		String retAddress = addressBase + getTail().getTrytes();
-		if(preSessionTailTxCount+getSessionTxCount()-preTailSessionTxCount >= MAX_TXS_PER_ADDRESS && System.currentTimeMillis() - lastTailCreated > 10000) {
+		if(Main.isInOnlineMode() && preSessionTailTxCount+getSessionTxCount()-preTailSessionTxCount >= MAX_TXS_PER_ADDRESS && System.currentTimeMillis() - lastTailCreated > 10000) {
 			getTail().update();
 			if(getTail().getTotalTxs() >= MAX_TXS_PER_ADDRESS) {
 				writeTailsIntoFile();
@@ -108,7 +126,7 @@ public class AddressManager {
 		String tailTrytes = "";
 		while(tailTrytes.length() < 81 - addressBase.length())
 			tailTrytes += (char)((int)'A'+(int)(Math.random()*26));
-		uim.logDbg("changing spam address to "  + addressBase + tailTrytes);
+        UIM.logDbg("changing spam address to "  + addressBase + tailTrytes);
 		
 		tails.add(new Tail(tailTrytes, 0, 0, 0, false));
 		writeTailsIntoFile();
@@ -122,7 +140,7 @@ public class AddressManager {
 			tail.update();
 			writeTailsIntoFile();
 			preSessionTailTxCount = tail.getTotalTxs();
-			uim.logDbg("picking up address from last session '"+getSpamAddress()+"' ("+tail.getConfirmedTxs() + "/" + tail.getTotalTxs() + " txs)");
+            UIM.logDbg("picking up address from last session '"+getSpamAddress()+"' ("+tail.getConfirmedTxs() + "/" + tail.getTotalTxs() + " txs)");
 		} else {
 			createNewAddressTail();
 		}
@@ -137,7 +155,7 @@ public class AddressManager {
 	
 	public static double getTailsConfirmRate(int amountOfTails) {
 		int total = getTailsTotalTxs(amountOfTails), confirmed = getTailsConfirmedTxs(amountOfTails);
-		return total == 0 ? 0 : 100.0 * confirmed / total;
+		return total == 0 ? 0 : 1.0 * confirmed / total;
 	}
 	
 	public static int getTailsConfirmedTxs(int amountOfTails) {

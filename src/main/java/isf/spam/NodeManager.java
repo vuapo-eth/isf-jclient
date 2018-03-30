@@ -1,10 +1,20 @@
-package isf;
+package isf.spam;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import isf.APIManager;
+import isf.Configs;
+import isf.FileManager;
+import isf.P;
+import isf.logic.CronJob;
+import isf.logic.CronJobManager;
+import isf.logic.ObjectWrapper;
+import isf.logic.TimeAbortCall;
+import isf.ui.R;
 import isf.ui.UIManager;
 import iota.GOldDiggerLocalPoW;
 import iota.IotaAPI;
@@ -65,14 +75,14 @@ public class NodeManager {
 		for(int i = 0; i < apis.length; i++)
 			connectToAnyNode(i, null);
 		
-		if(Configs.getBln(P.NODES_THIRD_PARTY_NODE_LIST)) TimeCaller.addTask(new Task(30*60000, false, false) { @Override void onCall() { loadNodeList(); } });
+		if(Configs.getBln(P.NODES_THIRD_PARTY_NODE_LIST)) CronJobManager.addCronJob(new CronJob(30*60000, false, false) { @Override public void onCall() { loadNodeList(); } });
 		
 		DEPTH = Configs.getInt(P.SPAM_DEPTH);
 	}
 
 	private static boolean connectToNode(final String node, final int api) {
 		
-		TimeAbortCall t = new TimeAbortCall("connecting to node", 1) {
+		TimeAbortCall t = new TimeAbortCall(R.STR.getString("nodes_action_connecting"), 1) {
 			
 			@Override
 			public boolean onCall() {
@@ -96,7 +106,7 @@ public class NodeManager {
 		
 		String isNodeSynced = isNodeSynced(api);
 		if(isNodeSynced != null)
-			uim.logDbg("node '" + buildNodeAddress(api) + "' ["+api+"] is not synced ("+isNodeSynced+"), changing node");
+			uim.logDbg(String.format(R.STR.getString("nodes_action_changing"), buildNodeAddress(api), api, isNodeSynced));
 		return isNodeSynced == null;
 	}
 
@@ -104,14 +114,14 @@ public class NodeManager {
 		available[api] = false;
 		
 		if(parNodeSyncedMsg != null)
-			uim.logDbg("node '" + buildNodeAddress(api) + "' ["+api+"] is not synced ("+parNodeSyncedMsg+"), changing node");
+            uim.logDbg(String.format(R.STR.getString("nodes_action_changing"), buildNodeAddress(api), api, parNodeSyncedMsg));
 		
 		new Thread("connectToAnyNode("+api+")") {
 			@Override
 			public void run() {
 				while(!connectToNode(getNextNode(), api)) {
 					if(nodeList.size() == 1) {
-						uim.logWrn("your only node '"+buildNodeAddress(api)+"' is not synced, waiting 30s and try again (add more nodes for higher reliability)");
+						uim.logWrn(String.format(R.STR.getString("nodes_not_synced"), nodeList.get(0), 30));
 						NodeManager.sleep(30000);
 					} else {
 						NodeManager.sleep(3000);
@@ -131,17 +141,13 @@ public class NodeManager {
 	}
 	
 	private static String getNextNode() {
-		if(nodeList.size() == 0)
-			try {
-				throw new Exception("could not connect to node: node list empty");
-			} catch (Exception e) {
-				uim.logException(e, true);
-				return null;
-			}
-		else {
-			nodeIndex = (nodeIndex+1)%nodeList.size();
-			return nodeList.get(nodeIndex);
-		}
+		if(nodeList.size() == 0) {
+		    uim.logErr(R.STR.getString("nodes_node_list_empty"));
+		    System.exit(0);
+        }
+
+        nodeIndex = (nodeIndex+1)%nodeList.size();
+        return nodeList.get(nodeIndex);
 	}
 	
 
@@ -156,8 +162,8 @@ public class NodeManager {
 	
 	private static int getAPI() {
 		if(availableAPIs < 1) {
-			uim.logDbg("waiting until connection to any iota api is established"); 
-			while(availableAPIs < 1) sleep(1000);
+			uim.logDbg(R.STR.getString("nodes_waiting"));
+			while(availableAPIs < 1) sleep(500);
 		}
 		if(!available[apiIndex]) rotateAPI();
 		int selectApiIndex = apiIndex;
@@ -168,16 +174,16 @@ public class NodeManager {
 	
 	private static void rotateAPI() {
 		if(availableAPIs < 1) {
-			uim.logDbg("waiting until connection to any iota api is established"); 
-			while(availableAPIs < 1) sleep(1000);
+            uim.logDbg(R.STR.getString("nodes_waiting"));
+			while(availableAPIs < 1) sleep(500);
 		}
 		
 		int tries = 0;
 		do {
 			apiIndex = (apiIndex+1)%apis.length;
 			if(tries++ > apis.length) {
-				uim.logWrn("no api available");
-				sleep(10);
+				uim.logWrn(R.STR.getString("nodes_unavailable"));
+				sleep(5000);
 			}
 		} while(!available[apiIndex]);
 	}
@@ -191,7 +197,7 @@ public class NodeManager {
 			try {
 				 findTransactionResponse = apis[api].findTransactionsByAddresses(addresses);
 			} catch (Throwable e) {
-				api = handleThrowableFromIotaAPI("check state of spam address '"+address+"'", e, api);
+				api = handleThrowableFromIotaAPI(String.format(R.STR.getString("nodes_action_check_address"), address), e, api);
 			}
 		}
 		
@@ -206,7 +212,7 @@ public class NodeManager {
 			try {
 				getInclusionStateResponse = apis[api].getLatestInclusion(hashes);
 			} catch (Throwable e) {
-				api = handleThrowableFromIotaAPI("check latest inclusion states", e, api);
+				api = handleThrowableFromIotaAPI(R.STR.getString("nodes_action_check_inclusions"), e, api);
 			}
 		}
 		return getInclusionStateResponse.getStates();
@@ -227,8 +233,8 @@ public class NodeManager {
 	
 	public static GetNodeInfoResponse getNodeInfo(final int parApi, boolean tryMultipleTimes) {
 
-		final ObjectCarrier api = new ObjectCarrier(parApi);
-		final ObjectCarrier res = new ObjectCarrier(null);
+		final ObjectWrapper api = new ObjectWrapper(parApi);
+		final ObjectWrapper res = new ObjectWrapper(null);
 		
 		TimeAbortCall tb = new TimeAbortCall("requesting node info", 0) {
 			@Override
@@ -286,7 +292,7 @@ public class NodeManager {
 	
 	private static int handleThrowableFromIotaAPI(String failedAction, Throwable e, int i) {
 		
-		if(e.getMessage().contains("inconsistent")) {
+		if(e.getMessage()!= null && e.getMessage().contains("inconsistent")) {
 			if(++inconsistentTipsPairs[i] >= INCONSISTENT_TIPS_PAIR_TOLERANCE) {
 				inconsistentTipsPairs[i] = 0;
 				connectToAnyNode(i, "selected inconsistent tips pair "+INCONSISTENT_TIPS_PAIR_TOLERANCE+" times");
@@ -295,7 +301,9 @@ public class NodeManager {
 		}
 		
 		String errorClassName = e.getClass().getName();
-		String errorMessage = (e.getMessage().contains("\"error\"") ? (e.getMessage().split("\"error\":\"")[1].split("\"")[0] + "'") : e.getMessage());
+		String errorMessage =
+                e.getMessage() == null ? " <null>" :
+                (e.getMessage().contains("\"error\"") ? (e.getMessage().split("\"error\":\"")[1].split("\"")[0] + "'") : e.getMessage());
 		String error = "could not " + failedAction + ": " + errorClassName + " - " + errorMessage;
 		
 		connectToAnyNode(i, error);
@@ -346,13 +354,14 @@ public class NodeManager {
 		String nodeListString = "";
 		for(int i = 0; i < nodeList.size(); i++) {
 			String node = nodeList.get(i);
-			nodeListString += node + (i < nodeList.size()-1 ? ", " : "");
+			nodeListString += node + (i < nodeList.size()-1 ? "\n" : "");
 		}
 		return nodeListString;
 	}
 	
 	public static void addNode(ArrayList<String> nodeList, String address, boolean log) {
 		address = address.toLowerCase().replaceAll("/$", "");
+		if(address.length() == 0 || address.charAt(0) == '#') return;
 		if(VALID_NODE_ADDRESS_REGEX.matcher(address).find()) {
 			if(log) uim.logDbg("adding node to node list: '"+address+"'");
 			nodeList.add(address);
@@ -370,7 +379,7 @@ public class NodeManager {
 	}
 	
 	public static void addToNodeList(ArrayList<String> parNodeList, String nodeListString) {
-		String[] nodes = (nodeListString.length() == 0) ? new String[0] : nodeListString.split("(,)");
+		String[] nodes = (nodeListString.length() == 0) ? new String[0] : nodeListString.split("\n");
 		for(String node : nodes)
 			addNode(parNodeList, node, true);
 	}
@@ -394,11 +403,7 @@ public class NodeManager {
 	}
 	
 	private static void sleep(int ms) {
-		try {
-			Thread.sleep(ms);
-		} catch (InterruptedException e) {
-			
-		}
+		try { Thread.sleep(ms); } catch (InterruptedException e) { }
 	}
 	
 	public static UIManager getUIM() {
@@ -439,13 +444,30 @@ public class NodeManager {
 	}
 	
 	public static void loadNodeList() {
-		uim.logDbg("downloading remote node list");
+		uim.logDbg(R.STR.getString("nodes_download_remote"));
 		ArrayList<String> newNodeList = new ArrayList<>();
-		addToNodeList(newNodeList, Configs.get(P.NODES_LIST).replace(" ", ""));
+
+		if(!FileManager.exists("nodelist.cfg"))
+		    FileManager.write("nodelist.cfg", buildNodesFileHeader());
+
+        String nodelist = FileManager.read("nodelist.cfg");
+		addToNodeList(newNodeList, nodelist.replace(" ", ""));
 		if(Configs.getBln(P.NODES_THIRD_PARTY_NODE_LIST)) NodeManager.importRemoteNodeList(newNodeList);
 		nodeList = newNodeList;
 		
 		shuffleNodeList();
-		uim.logDbg("node list includes " + nodeList.size() + " nodes");
+		if(nodeList.size() > 0)
+            uim.logDbg("node list includes " + nodeList.size() + " nodes");
+        else {
+            uim.logErr(R.STR.getString("nodes_node_list_empty"));
+            System.exit(0);
+        }
 	}
+
+    public static String buildNodesFileHeader() {
+        return "# " + String.format(R.STR.getString("nodes_file_header"),
+                R.URL.getString("node_format"),
+                R.URL.getString("node_example_1"),
+                R.URL.getString("node_example_2")) + "\n\n";
+    }
 }

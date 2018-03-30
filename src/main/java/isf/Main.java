@@ -1,70 +1,99 @@
 package isf;
 
-import org.json.JSONObject;
-
 import iota.GOldDiggerLocalPoW;
+import isf.spam.UploadDataManager;
+import isf.spam.*;
+import isf.ui.R;
 import isf.ui.UIManager;
 import isf.ui.UIQuestion;
 
 public class Main {
 	
-	private static final UIManager uim = new UIManager("Main");
+	private static final UIManager UIM = new UIManager("Main");
+	private static boolean onlineMode;
 	
 	public static void main(String[] args) {
-		
-		uim.print(UIManager.ANSI_BOLD+"\n===== Welcome to the Spam Fund Java Client " + Main.buildFullVersion() + " =====");
+
+        onlineMode = findParameterIndex("-offline", args) == -1;
+
+        UIM.print("\n"+UIManager.ANSI_BOLD+String.format(R.STR.getString("main_welcome"), buildFullVersion()));
 		Configs.loadOrGenerate();
-		
-		mainMenu(args.length > 0 && args[0] != null ? args[0].toLowerCase() : "");
-		
+
+		APIManager.login(findParameter("-email", args), findParameter("-pass", args));
+
+		mainMenu(findParameterIndex("-autostart", args) != -1);
+
+		if(!onlineMode)
+            UIM.logWrn(R.STR.getString("main_offline_mode"));
+
 		if(Configs.getBln(P.POW_USE_GO_MODULE))
-			GOldDiggerLocalPoW.download();
+			GOldDiggerLocalPoW.downloadPowIfNonExistent();
 		
-		JSONObject spamParameters = APIManager.requestSpamParameters();
-		AddressManager.setAddressBase(spamParameters.getString("address"));
-		SpamThread.setTag(spamParameters.getString("tag"));
+		APIManager.requestSpamParameters();
 		
 		NodeManager.init();
-		AddressManager.init();
-		
-		int powThreads = Configs.getInt(P.POW_CORES);
-		uim.logDbg("starting " + powThreads + " pow thread"+(powThreads == 1 ? "" : "s"));
-		
-		Logger.init();
+
+        UIM.logDbg(R.STR.getString("nodes_waiting"));
+		while (NodeManager.getAmountOfAvailableAPIs() == 0) try { Thread.sleep(200); } catch (InterruptedException e) {}
+
+        AddressManager.init();
+        int powCores = Configs.getInt(P.POW_CORES);
+        UIM.logDbg(String.format(R.STR.getString("main_start_pow_cores"), powCores));
+
 		TipPool.init();
-		new SpamThread().start();
+        UploadDataManager.start();
+		new SpamThread().init();
+        Logger.init();
     	
     	Runtime.getRuntime().addShutdownHook(new Thread() {
     		@Override
     		public void run() {
-    			uim.logDbg("terminating ...");
+                UIM.logDbg(R.STR.getString("main_terminate"));
     			AddressManager.updateTails();
+
+    			do {
+    			    int amountQueued = TxBroadcaster.getAmountQueued();
+    			    if(amountQueued == 0) break;
+                    UIM.logDbg(String.format(R.STR.getString("main_terminate_broadcast"), amountQueued));
+                    try { sleep(1000); } catch(InterruptedException e) {}
+                } while (true);
     		}
     	});
 	}
+
+    private static String findParameter(String name, String[] args) {
+	    int index = findParameterIndex(name, args);
+	    return index == -1 || index == args.length-1 ? null : args[index+1];
+    }
+
+    private static int findParameterIndex(String name, String[] args) {
+        for(int i = 0; i < args.length; i++)
+            if(args[i].equals(name))
+                return i;
+        return -1;
+    }
 	
-	public static void mainMenu(String command) {
-		
-		boolean lookForUpdates = !command.equals("start");
-		
-		if(lookForUpdates)
-			uim.print("You can skip this menu by starting the .jar file with the parameter 'start' like this: "+UIManager.ANSI_BOLD+"'java -jar isf-jclient-[VERSION].jar start'\n");
-		else
-			uim.logWrn("skipping 'looking for updates' because of auto start (program was started with parameter 'start')");
-			
-		while (!command.equals("start")) {
-			
-			if(command.equals("rewards")) APIManager.printRewards();
-			if(command.equals("config")) Configs.edit();
-			if(command.equals("debug")) {
-				uim.logInf(UIManager.isDebugEnabled() ? "disabling debugging mode" : "activating debugging mode");
-				UIManager.setDebugEnabled(!UIManager.isDebugEnabled());
-			}
-			
-			command = uim.askQuestion(UIQuestion.Q_START_MENU);
-		}
-		
-		if(lookForUpdates) uim.printUpdates();
+	public static void mainMenu(boolean autostart) {
+
+	    if(autostart) {
+            UIM.logWrn(R.STR.getString("main_skip_updates"));
+            return;
+        }
+
+        UIM.print(String.format(R.STR.getString("main_skip_menu_instructions"), UIManager.ANSI_BOLD+"java -jar isf-jclient-[VERSION].jar -autostart" + UIManager.ANSI_RESET));
+	    String command;
+		do {
+            command = UIM.askQuestion(UIQuestion.Q_START_MENU);
+		    switch (command) {
+                case ("r"):
+                    APIManager.printRewards();
+                    break;
+                case ("c"):
+                    Configs.edit();
+                    break;
+            }
+		} while (!command.equals("s"));
+        UIM.printUpdates();
 	}
 	
 	public static String getVersion() {
@@ -72,10 +101,18 @@ public class Main {
 	}
 	
 	public static String getBuild() {
-		return "9";
+		return "10";
 	}
 	
 	public static String buildFullVersion() {
 		return getVersion() + "." + getBuild();
 	}
+
+	public static boolean isInOnlineMode() {
+	    return onlineMode;
+    }
+
+    public static void setOnlineMode(boolean onlineMode) {
+        Main.onlineMode = onlineMode;
+    }
 }

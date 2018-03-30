@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.iotaspam</groupId>
 	<artifactId>isf-jclient</artifactId>
-	<version>1.0.9</version> 
+	<version>1.0.10</version>
 	<name>IOTA Spam Fund Java Client</name>
 	<url>http://iotaspam.com</url>
 	<dependencies>
@@ -81,7 +81,8 @@
 			<resource>
 				<directory>res</directory>
 				<includes>
-					<include>log4j2.xml</include>
+                    <include>log4j2.xml</include>
+					<include>*.properties</include>
 				</includes>
 			</resource>
 		</resources>

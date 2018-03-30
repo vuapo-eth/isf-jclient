@@ -2,9 +2,12 @@ package isf;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.regex.Pattern;
 
+import isf.spam.NodeManager;
+import isf.ui.R;
+import org.apache.commons.lang3.StringUtils;
 import org.ini4j.Wini;
 
 import isf.ui.UIManager;
@@ -14,72 +17,39 @@ import isf.ui.UIQuestionInt;
 public class Configs {
 	
 	private static final UIManager UIM = new UIManager("Configs");
-	private static final String CONFIG_FILE_NAME = "config.ini";
+	private static final String CONFIG_FILE_NAME = R.URL.getString("config_file_name");
 	
 	private static Wini wini;
-	
-	public static String
-			isf_email = null,
-			isf_password = null;
 	
 	public static void loadOrGenerate() {
 		if(FileManager.exists(CONFIG_FILE_NAME)) loadWini();
 		else generate();
+		UIManager.updateDebugEnabled();
 	}
 	
 	private static void generate() {
-		UIM.print("=== CONFIGURATION ===");
-		UIM.print("no "+CONFIG_FILE_NAME+" file could be found, therefore one will be created now");
-		UIM.print("");
-		
+		UIM.print(String.format(R.STR.getString("config_create"), CONFIG_FILE_NAME)+"\n");
 		loadWini();
-		askForColors();
+		P.LOG_COLORS_ENABLED.edit();
 		askForNodes(true);
-		askForAccountData(true);
 		saveWini();
-	}
-	
-	private static void askForColors() {
-		UIManager.toggleColors(true);
-		set(P.LOG_COLORS_ENABLED, UIM.askForBoolean(UIManager.ANSI_BLUE+"Does this text appear blue?"));
-		UIManager.toggleColors(getBln(P.LOG_COLORS_ENABLED));
-	}
-	
-	public static void askForAccountData(boolean settingUp) {
-		if(settingUp) {
-			UIM.print(UIManager.ANSI_BOLD+"[2/2] Sign in using your IOTA Spam Fund account\n");
-			UIM.print("If you haven't signed up yet, visit http://iotaspam.com/account/?p=signup to do so.");
-		}
-		
-		if(isf_email == null || isf_email.length() == 0)
-			isf_email = UIM.askQuestion(UIQuestion.Q_EMAIL);
-		isf_password = UIM.askQuestion(UIQuestion.Q_PASSWORD);
-		
-		if(settingUp) {
-			APIManager.keepSendingUntilSuccess("signin", null, "signing in");
-			
-			int saveMode = UIM.askQuestionInt(UIQuestionInt.Q_SAVE_ACCOUNT_DATA);
-			set(P.SPAMFUND_EMAIL, saveMode > 0 ? isf_email : "");
-			set(P.SPAMFUND_PASSWORD, saveMode == 2 ? isf_password : "");
-			saveWini();
-		}
 	}
 	
 	private static void askForNodes(boolean firstSetup) {
 		
 		NodeManager.clearNodes();
 		
-		set(P.NODES_THIRD_PARTY_NODE_LIST, UIM.askForBoolean((firstSetup ? "[1/2] " : "")+"do you want to use third party node lists?"));
+		set(P.NODES_THIRD_PARTY_NODE_LIST, UIM.askForBoolean(R.STR.getString("config_question_third_party_node_list")));
 		
-		if(!getBln(P.NODES_THIRD_PARTY_NODE_LIST) || UIM.askForBoolean("do you want to add other nodes to your node list?")) {
+		if(!getBln(P.NODES_THIRD_PARTY_NODE_LIST)) {
 			String nodeInput = null;
 			do {
 				nodeInput = UIM.askQuestion(UIQuestion.Q_NODES);
 				if(nodeInput.length() > 0) {
 					NodeManager.addNode(nodeInput, false);
-					set(P.NODES_LIST, NodeManager.buildNodeListString());
+					FileManager.write("nodelist.cfg", NodeManager.buildNodesFileHeader() + NodeManager.buildNodeListString());
 				}
-			} while(nodeInput.length() > 0 && UIM.askForBoolean("do you want to add another node?"));
+			} while(nodeInput.length() > 0 && UIM.askForBoolean(R.STR.getString("config_question_add_node")));
 		}
 
 		NodeManager.clearNodes();
@@ -93,84 +63,106 @@ public class Configs {
 	}
 	
 	private static void load() {
+		UIM.logDbg(R.STR.getString("config_loading"));
+
 		for(P p : P.values())
 			set(p, get(p));
 		saveWini();
 		
 		UIManager.toggleColors(getBln(P.LOG_COLORS_ENABLED));
-		
-		UIM.logDbg("loading configurations");
-		
-		isf_email = get(P.SPAMFUND_EMAIL);
-		if(isf_email.length() == 0) isf_email = null;
-		isf_password = get(P.SPAMFUND_PASSWORD);
-		if(isf_password.length() == 0) isf_password = null;
 
-		if(isf_email == "" || isf_password == "")
-			askForAccountData(false);
-		
-		UIM.logDbg("signing in using account: '"+isf_email+"'");
-		APIManager.keepSendingUntilSuccess("signin", null, "signing in");
-		
-		UIM.logDbg("configurations loaded successfully");
+        // correct spam address if not correct
+        final Pattern VALID_TRYTES = Pattern.compile("^[A-Z9]*$");
+        String spamAddress = get(P.SPAM_OFFLINE_ADDRESS).toUpperCase();
+        final Pattern VALID_SPAM_ADDRESS = Pattern.compile("^[A-Z9]{81}$");
+        if(!VALID_SPAM_ADDRESS.matcher(spamAddress).find()) {
+            if(!VALID_TRYTES.matcher(spamAddress).find())
+                spamAddress = "";
+            spamAddress = spamAddress.substring(0, Math.min(spamAddress.length(), 81));
+            spamAddress = spamAddress + StringUtils.repeat("9",81-spamAddress.length());
+            set(P.SPAM_OFFLINE_ADDRESS, spamAddress);
+        }
+
+        // correct spam tag if not correct
+        String spamTag = get(P.SPAM_OFFLINE_TAG).toUpperCase();
+        final Pattern VALID_SPAM_TAG = Pattern.compile("^[A-Z9]{27}$");
+        if(!VALID_SPAM_ADDRESS.matcher(spamTag).find()) {
+            if(!VALID_TRYTES.matcher(spamTag).find())
+                spamTag = "";
+            spamTag = spamTag.substring(0, Math.min(spamTag.length(), 27));
+            spamTag = spamTag + StringUtils.repeat("9",27-spamTag.length());
+            set(P.SPAM_OFFLINE_TAG, spamTag);
+        }
+
+        UIM.logDbg(R.STR.getString("config_loading_success"));
 	}
 	
 	public static void edit() {
 
-		UIM.logDbg("editing configurations");
-		
-		String variable = "";
-		while(!variable.equals("save")) {
-			variable = UIM.askQuestion(new UIQuestion() {
-				
-				@Override
-				public boolean isAnswer(String str) {
-					return str.equals("account") || str.equals("nodes") || str.equals("spam") || str.equals("log") || str.equals("save");
-				}
-				
-			}.setQuestion("what parameter do you want to change? [spam/nodes/account/log | SAVE]"));
+        String sectionsString = "";
+        final ArrayList<String> sections = new ArrayList<String>();
+        for(P p : P.values())
+            if(p.isEditable() && !sections.contains(p.parent)) {
+                sections.add(p.parent);
+                sectionsString += (sectionsString.length() > 0 ? "/" : "") + p.parent;
+            }
 
-			if(variable.equals("spam")) {
-				int amountOfCores = Runtime.getRuntime().availableProcessors();
-				UIQuestionInt.Q_THREADS_AMOUNT_POW.setRange(1, amountOfCores);
-				UIQuestionInt.Q_THREADS_AMOUNT_POW.setQuestion("how many threads do you want to use for performing Proof-of-Work? (your processor has "+amountOfCores+" cores) ")
-					.setRecommended(Math.max(1, amountOfCores-1));
-				set(P.POW_CORES, UIM.askQuestionInt(UIQuestionInt.Q_THREADS_AMOUNT_POW));
-				set(P.POW_ABORT_TIME, UIM.askQuestionInt(UIQuestionInt.Q_POW_ABORT_TIME));
-			} else if(variable.equals("account")) {
-				isf_email = null;
-				isf_password = null;
-				APIManager.keepSendingUntilSuccess("signin", null, "signing in");
-				set(P.SPAMFUND_EMAIL, isf_email == null ? "" : isf_email);
-				set(P.SPAMFUND_PASSWORD, isf_password == null ? "" : isf_password);
-			} else if(variable.equals("nodes")) {
-				askForNodes(false);
-			} else if(variable.equals("log")) {
-				Configs.set(P.LOG_INTERVAL, UIM.askQuestionInt(UIQuestionInt.Q_LOG_INTERVAL));
-				Configs.set(P.LOG_PERFORMANCE_REPORT_INTERVAL, UIM.askQuestionInt(UIQuestionInt.Q_LOG_PERFORMANCE_REPORT_INTERVAL));
-				do Configs.set(P.LOG_TIME_FORMAT, UIM.askQuestion(UIQuestion.Q_TIME_FORMAT));
-				while(!UIM.askForBoolean("do you really want your time to be displayed like that: " + new SimpleDateFormat(get(P.LOG_TIME_FORMAT)).format(new Date()) +"?"));
-				askForColors();
-			}
-		}
+        final UIQuestion sectionQuestion = new UIQuestion() {
+            @Override
+            public boolean isAnswer(String str) {
+                return sections.contains(str) || str.equals("save");
+            }
+        }.setQuestion(R.STR.getString("config_menu_section") + " ["+sectionsString+" | SAVE]");
+
+		UIM.logDbg(R.STR.getString("config_editing"));
+		
+		String section = "";
+		do {
+            section = UIM.askQuestion(sectionQuestion);
+			if(section.equals("save")) break;
+
+			openPropertyMenu(section);
+		} while(true);
 		
 		saveWini();
-		
 	}
+
+	public static void openPropertyMenu(final String section) {
+
+        final ArrayList<P> properties = new ArrayList<P>();
+
+        String parameterString = "";
+        for(P p : P.values())
+            if(p.isEditable() && p.parent.equals(section)) {
+                properties.add(p);
+                parameterString += (parameterString.length() > 0 ? ", " : "") + properties.size() + " = " + p.name;
+            }
+
+        final UIQuestionInt propertyQuestion = new UIQuestionInt(0, properties.size(), false).setQuestion(R.STR.getString("config_menu_parameter") + " ["+parameterString+" | 0 = BACK]");
+
+        do {
+            int property = UIM.askQuestionInt(propertyQuestion);
+            if(property == 0) break;
+            P p = properties.get(property-1);
+            String strResource = get(p).equals(p.defaultValue) ? "config_parameter_value_is_default" : "config_parameter_value";
+            UIM.print("\n"+String.format(R.STR.getString(strResource), p.name, get(p), p.defaultValue));
+            properties.get(property-1).edit();
+        } while(true);
+    }
 	
 	private static void saveWini() {
 		try {
 			wini.store();
-			UIM.logDbg("configurations saved successfully");
+			UIM.logDbg(R.STR.getString("config_saving_success"));
 		} catch (IOException e) {
-			UIM.logWrn("saving configurations failed");
+			UIM.logWrn(R.STR.getString("config_saving_fail"));
 			UIM.logException(e, false);
 		}
 	}
 	
 	private static void initWini() {
 		
-		UIM.logDbg("generating default configuration");
+		UIM.logDbg(R.STR.getString("config_generating_default"));
 
 		for(P p : P.values())
 			set(p, p.defaultValue);
@@ -188,7 +180,7 @@ public class Configs {
 		return (String)p.get(wini);
 	}
 	
-	private static void set(P p, Object o) {
+	public static void set(P p, Object o) {
 		wini.put(p.parent, p.name, o);
 	}
 	
@@ -205,7 +197,7 @@ public class Configs {
 				load();
 			}
 		} catch (IOException e) {
-			UIM.logWrn("loading configuration file failed [maybe the jar is missing permission to write here, try to start it with 'sudo java -jar ...']");
+			UIM.logWrn(R.STR.getString("config_loading_fail"));
 			UIM.logException(e, true);
 		}
 	}

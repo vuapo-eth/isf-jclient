@@ -1,8 +1,11 @@
-package isf;
+package isf.spam;
 
+import isf.logic.TimeAbortCall;
 import jota.dto.response.GetAttachToTangleResponse;
 
 public class TxBroadcaster {
+
+    private static int amountQueued = 0;
 	
 	public static void queueTrytes(final GetAttachToTangleResponse res) {
 		
@@ -23,9 +26,15 @@ public class TxBroadcaster {
 		new Thread() {
 			@Override
 			public void run() {
+                amountQueued++;
 				while(!broadcastBomb.call(10));
 				AddressManager.incrementSessionTxCount();
+                amountQueued--;
 			}
 		}.start();
 	}
+
+    public static int getAmountQueued() {
+        return amountQueued;
+    }
 }

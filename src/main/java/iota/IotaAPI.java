@@ -3,12 +3,12 @@ package iota;
 import java.util.ArrayList;
 import java.util.List;
 
-import isf.AddressManager;
-import isf.TipPool;
-import isf.TxBroadcaster;
-import isf.NodeManager;
-import isf.SpamThread;
-import isf.UploadDataManager;
+import isf.spam.AddressManager;
+import isf.spam.TipPool;
+import isf.spam.TxBroadcaster;
+import isf.spam.NodeManager;
+import isf.spam.SpamThread;
+import isf.spam.UploadDataManager;
 import jota.dto.response.GetAttachToTangleResponse;
 import jota.dto.response.GetTransactionsToApproveResponse;
 import jota.error.ArgumentException;
@@ -36,7 +36,6 @@ public class IotaAPI extends jota.IotaAPI {
         GetTransactionsToApproveResponse txs = TipPool.getTransactionsToApprove();
 		while(txs == null) txs = NodeManager.getTransactionsToApprove(NodeManager.getRotatedAPI());
         final GetAttachToTangleResponse res = attachToTangle(txs.getTrunkTransaction(), txs.getBranchTransaction(), MIN_WEIGHT_MAGNITUDE, trytes.toArray(new String[trytes.size()]));
-        
         TxBroadcaster.queueTrytes(res);
 	}
 	

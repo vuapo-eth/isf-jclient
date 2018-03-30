@@ -1,13 +1,17 @@
 package isf.ui;
 
+
 public class UIQuestionInt extends UIQuestion {
 
-	public static final UIQuestionInt Q_POW_ABORT_TIME = new UIQuestionInt(1, 120, true).setRecommended(20).setQuestion("how many seconds do you want to wait before aborting proof-of-work of a transaction?");
-	public static final UIQuestionInt Q_THREADS_AMOUNT_POW = new UIQuestionInt(1, 1, true);
-	public static final UIQuestionInt Q_SAVE_ACCOUNT_DATA = new UIQuestionInt(0, 2, false).setQuestion("do you want to save your account data in your config.ini? [0 = no; 1 = save only email; 2 = save email and password]");
-	public static final UIQuestionInt Q_LOG_INTERVAL = new UIQuestionInt(1, 3600, true).setQuestion("how many seconds do you wish the logger to wait between each info log").setRecommended(60);
-	public static final UIQuestionInt Q_LOG_PERFORMANCE_REPORT_INTERVAL = new UIQuestionInt(1, 3600, true).setQuestion("how many seconds do you wish the logger to wait between each performance report log").setRecommended(300);
-	public static final UIQuestionInt Q_NODES_AMOUNT_ROTATION = new UIQuestionInt(1, -1, true).setQuestion("between how many nodes do you want to rotate after each transaction? (use many, but no more than you have nodes)");
+    private static final int CORES = Runtime.getRuntime().availableProcessors();
+
+    public static final UIQuestionInt Q_NODE_SYNC_CHECK_INTERVAL = new UIQuestionInt(1, 3600, true).setRecommended(240).setQuestion(R.STR.getString("config_question_sync_check_interval"));
+    public static final UIQuestionInt Q_SPAM_DEPTH = new UIQuestionInt(1, 5, true).setRecommended(3).setQuestion(R.STR.getString("config_question_depth"));
+    public static final UIQuestionInt Q_POW_ABORT_TIME = new UIQuestionInt(1, 120, true).setRecommended(30).setQuestion(R.STR.getString("config_question_pow_abort"));
+	public static final UIQuestionInt Q_THREADS_AMOUNT_POW = new UIQuestionInt(1, CORES, true).setRecommended(Math.max(1, CORES-1)).setQuestion(String.format(R.STR.getString("config_question_cores"), CORES));
+	public static final UIQuestionInt Q_LOG_INTERVAL = new UIQuestionInt(1, 3600, true).setQuestion(R.STR.getString("config_question_log_interval")).setRecommended(60);
+	public static final UIQuestionInt Q_LOG_PERFORMANCE_REPORT_INTERVAL = new UIQuestionInt(1, 3600, true).setQuestion(R.STR.getString("config_question_performance_report")).setRecommended(180);
+	public static final UIQuestionInt Q_NODES_AMOUNT_ROTATION = new UIQuestionInt(1, -1, true).setQuestion(R.STR.getString("config_question_node_rotation")).setRecommended(20);
 	
 	private int min, max, recommended;
 	private final boolean includeRangeInQuestion;
@@ -31,11 +35,15 @@ public class UIQuestionInt extends UIQuestion {
 		this.max = max;
 		return this;
 	}
-	
-	public UIQuestionInt setRecommended(int recommended) {
-		this.recommended = recommended;
-		return this;
-	}
+
+    public UIQuestionInt setRecommended(int recommended) {
+        this.recommended = recommended;
+        return this;
+    }
+
+    public int getRecommended() {
+	    return recommended;
+    }
 	
 	@Override
 	public boolean isAnswer(String str) {

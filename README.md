@@ -132,6 +132,13 @@ Simply start the .jar to run the spamming tool:
 
 After starting it for the first time, you will be guided through the configuration. You can always stop the spammer using `CTRL+C`.
 
+| option | example | what it does |
+| --- | --- | --- |
+| `-autostart` | `-autostart` | skips main menu and looking updates, allowing you to instantly start the spammer |
+| `-offline` | `-offline` | spam your own spam instead of [iotaspam.com](http://iotaspam.com) spam (you won't receive rewards) |
+| `-email` | `-email bob@example.org` | automatically try to sign in using this email |
+| `-pass` | `-pass hunter2` | automatically try to sign in using this password (requires you to use `-email`) |
+
 # COMPILING POW.GO
 
 If you want to compile the GO proof-of-work module yourself instead of downloading it from the releases, here is how to do it:

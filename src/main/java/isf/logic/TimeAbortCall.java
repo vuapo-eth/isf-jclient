@@ -1,9 +1,10 @@
-package isf;
+package isf.logic;
 
+import isf.ui.R;
 import isf.ui.UIManager;
 
 public abstract class TimeAbortCall {
-	private static final UIManager UIM = new UIManager("TimeBomb");
+	private static final UIManager UIM = new UIManager("TimeAbrt");
 
 	private final String actionName;
 	private final int tolerance;
@@ -17,8 +18,8 @@ public abstract class TimeAbortCall {
 	
 	public boolean call(int timeLimitSeconds) {
 
-		final ObjectCarrier res = new ObjectCarrier(false);
-		final ObjectCarrier success = new ObjectCarrier(false);
+		final ObjectWrapper res = new ObjectWrapper(false);
+		final ObjectWrapper success = new ObjectWrapper(false);
 		
 		Thread t = new Thread() {
 			@Override
@@ -41,7 +42,8 @@ public abstract class TimeAbortCall {
 		}
 		
 		if(tolerance > 0 && fails >= tolerance) {
-			String failMsg = "action '" + actionName + "' took too long and was aborted after "+timeLimitSeconds+" seconds" + (tolerance > 1 ? " (this message only shows up on every "+tolerance+"th abortion)" : "");
+
+			String failMsg = String.format(R.STR.getString("abort_message"), actionName, timeLimitSeconds) + (tolerance > 1 ? String.format(" ("+R.STR.getString("abort_tolerance")+")", tolerance) : "");
 			onNotToleratedFail(failMsg);
 			UIM.logWrn(failMsg);
 			fails = 0;

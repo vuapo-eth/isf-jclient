@@ -1,12 +1,18 @@
-package isf;
+package isf.spam;
 
+import isf.APIManager;
+import isf.Configs;
+import isf.Main;
+import isf.P;
+import isf.logic.CronJob;
+import isf.logic.CronJobManager;
+import isf.logic.TimeAbortCall;
 import org.json.JSONObject;
 
 import iota.GOldDiggerLocalPoW;
 import isf.ui.UIManager;
 
 public class SpamThread extends Thread {
-
 	
 	private static boolean paused = false;
 	private static String tag = "IOTASPAM9DOT9COM99999999999";
@@ -22,14 +28,28 @@ public class SpamThread extends Thread {
 			return NodeManager.sendSpam();
 		}
 	};
-	
-	@Override
+
+    public SpamThread() {
+        super("SpamThread");
+    }
+
+    public void init() {
+        spamThread = this;
+
+        GOldDiggerLocalPoW.start(Configs.getInt(P.POW_CORES));
+
+        if(Main.isInOnlineMode()) {
+            updateRemoteControl();
+            CronJobManager.addCronJob(new CronJob(120000, false, false) { @Override public void onCall() { updateRemoteControl(); } });
+        }
+
+        start();
+    }
+
+    @Override
 	public void run() {
-		spamThread = this;
-		
-		GOldDiggerLocalPoW.start(Configs.getInt(P.POW_CORES));
-		TimeCaller.addTask(new Task(120000, true, false) { @Override void onCall() { updateRemoteControl(); } });
-		timeStarted = System.currentTimeMillis();
+
+        timeStarted = System.currentTimeMillis();
 		
 		while(true) {
 			

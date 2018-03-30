@@ -1,4 +1,4 @@
-package isf;
+package isf.spam;
 
 import isf.ui.UIManager;
 
@@ -25,6 +25,7 @@ public class Tail {
 	}
 	
 	public void update() {
+
 		String[] hashes = NodeManager.findTransactionsByAddress(AddressManager.getAddressBase() + getTrytes());
 		boolean[] states = NodeManager.getLatestInclusion(hashes);
 		
