@@ -6,6 +6,7 @@
 /bin/
 *.exe
 pow_lin_amd64
+pow_lin_amd64_v2
 *.iml
 *.cfg
 _config.yml

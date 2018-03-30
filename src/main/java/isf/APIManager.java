@@ -194,10 +194,14 @@ public class APIManager {
 	}
 
 	private  static String buildAuthString(long nonce) {
-        if(!Main.isInOnlineMode())
-            return "&build="+Main.getBuild();
-        String hash = md5((isf_password+"-"+nonce).getBytes());
-        return "email="+isf_email.replace("+", "%2B")+"&nonce="+nonce+"&hash="+hash+"&build="+Main.getBuild();
+    	String authString = "build="+Main.getBuild()+"&testnet="+Main.isInTestnetMode();
+
+        if(Main.isInOnlineMode()) {
+            String hash = md5((isf_password+"-"+nonce).getBytes());
+            authString = "email="+isf_email.replace("+", "%2B")+"&nonce="+nonce+"&hash="+hash+"&"+authString;
+        }
+
+        return authString;
     }
 
 	private static String determineConnectionError(final String filename, final String targetUrl) {

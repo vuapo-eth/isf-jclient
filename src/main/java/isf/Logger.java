@@ -23,8 +23,9 @@ public class Logger {
     private static final int MINUTES_PER_MONTH = 30*24*60;
 
     private static double priceUsd = 0;
-    private static int balance = 0, iotaPerTx = 0;
-	
+    private static int balance = 0;
+    private static double iotaPerTx = 0;
+
 	public static void init() {
 
 		final int logInterval = Configs.getInt(P.LOG_INTERVAL);
@@ -42,13 +43,13 @@ public class Logger {
         CronJobManager.addCronJob(new CronJob(logInterval * 1000, true, false) { @Override public void onCall() { log(); } });
 		CronJobManager.addCronJob(new CronJob(performanceReportInterval * 1000, false, false) { @Override public void onCall() { performanceReport(); } });
 	}
-	
+
 	private static void updateBalance() {
 		final JSONObject objBalance = APIManager.requestBalance();
 		balance = objBalance.getInt("balance");
-        iotaPerTx = objBalance.getInt("reward");
+        iotaPerTx = objBalance.getDouble("reward");
 	}
-	
+
 	private static void log() {
 
 		if(SpamThread.isPaused()) return;
@@ -68,7 +69,7 @@ public class Logger {
 
 		final String logTime = UIManager.padLeft(formatInterval(timeRunning), 10);
         final String logSpam = UIManager.padLeft(SpamThread.getTotalSpam()+"", 7);
-        final String logSpeed = txsPerMinute > 60 ?  DF.format(txsPerMinute/60) : DF2.format(txsPerMinute) + (txsPerMinute > 60 ? " tps" : " txs/min");
+        final String logSpeed = txsPerMinute > 60 ?  DF.format(txsPerMinute/60) + " tps" : DF2.format(txsPerMinute) + " txs/min";
         final String logConfirmed = UIManager.padLeft(confirmedSpam + (totalSpam < 1000 ? UIManager.padRight("/"+totalSpam, 4) : "")  + " txs ("+DF2.format(100*confirmationRate)+"%)", 20);
         final String logBalance = balanceString;
         final String logRewardPerMonth = DF.format(miotaPerMonth) + " Mi" + (priceUsd > 0 ? " ($"+DF.format(miotaPerMonth*priceUsd)+")": "");

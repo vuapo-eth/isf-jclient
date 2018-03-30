@@ -17,6 +17,7 @@ import java.util.Set;
 import cfb.pearldiver.PearlDiver;
 import isf.Configs;
 import isf.FileManager;
+import isf.Main;
 import isf.logic.ObjectWrapper;
 import isf.P;
 import isf.ui.R;
@@ -32,6 +33,7 @@ public class GOldDiggerLocalPoW implements IotaLocalPoW {
     // stats
 	private static int amountPoW = 0;
 	private static long totalTimePoW = 0;
+	private static int MWM = 14;
 
 	// object wrappers for thread communication
 	private static final ObjectWrapper powTrytes = new ObjectWrapper(null);
@@ -46,7 +48,7 @@ public class GOldDiggerLocalPoW implements IotaLocalPoW {
     @Override
     public String performPoW(String trytes, int minWeightMagnitude) {
         long timeStarted = System.currentTimeMillis();
-        String nonced = goPowAvailable ? goPow(trytes) : javaPow(trytes, minWeightMagnitude);
+        String nonced = goPowAvailable ? goPow(trytes) : javaPow(trytes);
         totalTimePoW += System.currentTimeMillis() - timeStarted;
         amountPoW++;
         return nonced;
@@ -57,9 +59,9 @@ public class GOldDiggerLocalPoW implements IotaLocalPoW {
      * @param preparedTrytes trytes before pow
      * @return trytes after pow
      * */
-    private String javaPow(String preparedTrytes, int minWeightMagnitude) {
+    private String javaPow(String preparedTrytes) {
         int[] trits = Converter.trits(preparedTrytes);
-        if (!PEARL_DIVER.search(trits, minWeightMagnitude, Configs.getInt(P.POW_CORES)))
+        if (!PEARL_DIVER.search(trits, MWM, Configs.getInt(P.POW_CORES)))
             throw new IllegalStateException(R.STR.getString("pow_abort"));
         return Converter.trytes(trits);
     }
@@ -81,7 +83,7 @@ public class GOldDiggerLocalPoW implements IotaLocalPoW {
     }
 
     public static void downloadPowIfNonExistent() {
-    	
+
     	if(POW_FILE.exists()) return;
 
     	boolean goModuleWantedByUser = UIM.askForBoolean(R.STR.getString("pow_go_wanted_question"));
@@ -124,65 +126,64 @@ public class GOldDiggerLocalPoW implements IotaLocalPoW {
         perms.add(PosixFilePermission.OWNER_EXECUTE);
         try { Files.setPosixFilePermissions(POW_FILE.toPath(), perms); } catch(IOException | UnsupportedOperationException e) { }
     }
-    
+
     public static void start(int threads) {
+
+        MWM = Main.isInTestnetMode() ? 13 : 14;
 
 		if(!Configs.getBln(P.POW_USE_GO_MODULE)) {
 			UIM.logWrn(R.STR.getString("pow_go_user_refused_use"));
 			return;
 		}
-			
-		final String os = System.getProperty("os.name").toLowerCase();
-		final String arch = System.getProperty("os.arch").toLowerCase();
-		final String fileExtension = os.substring(0, 3).equals("win") ? ".exe" : "";
-		final String powFileName = "pow_"+os.substring(0, 3)+"_"+arch+fileExtension;
+
+		final String powFileName = determinePowFileName();
 
     	goPowAvailable = FileManager.exists(powFileName);
-    	
+
     	if(!goPowAvailable) {
 			UIM.logWrn(R.STR.getString("pow_go_file_missing"));
     		return;
     	}
-    	
+
         Process proc = null;
-        
+
 		try {
 			proc = Runtime.getRuntime().exec("./"+powFileName);
 		} catch (IOException e) {
 			UIM.logException(e, false);
 		}
-		
+
         InputStream in = proc.getInputStream();
         final OutputStream out = proc.getOutputStream();
 		final Scanner s = new Scanner(in);
 		scannerOpen.o = true;
 		s.useDelimiter("\n");
         threads = Math.min(Math.max(1, threads), Runtime.getRuntime().availableProcessors());
-        
+
         try {
-			out.write((threads + "\n").getBytes());
-			out.flush();
-			
+            out.write((threads + "\n" + MWM + "\n").getBytes());
+            out.flush();
+
 			String powName = s.hasNext() ? s.next().replace("\n", "") : "";
 			if(powName.equals("PowGo"))
 			    UIM.logWrn(R.STR.getString("pow_go_compilation_incomplete"));
 			else
 			    UIM.logInf(R.STR.getString("pow_go_optimal_method") + powName);
-			
+
 		} catch (IOException e) {
 			UIM.logException(e, false);
 		}
-        
+
         powTrytes.o = "";
-    	
+
     	final Thread t = new Thread() {
-	        
+
     		public void run() {
-    	        
+
     	        while(true) {
-    	        	
+
     	        	synchronized (powTrytes) { try { powTrytes.wait(); } catch (InterruptedException e) { break; } }
-    	        	
+
         	        try {
         				out.write((powTrytes.o+"\n").getBytes());
         				out.flush();
@@ -196,9 +197,9 @@ public class GOldDiggerLocalPoW implements IotaLocalPoW {
     	        }
     		}
     	};
-    	
+
     	t.start();
-    	
+
     	Runtime.getRuntime().addShutdownHook(new Thread() {
     		@Override
     		public void run() {
@@ -212,7 +213,7 @@ public class GOldDiggerLocalPoW implements IotaLocalPoW {
         final String os = System.getProperty("os.name").toLowerCase();
         final String arch = System.getProperty("os.arch").toLowerCase();
         final String fileExtension = os.substring(0, 3).equals("win") ? ".exe" : "";
-        return "pow_"+os.substring(0, 3)+"_"+arch+fileExtension;
+        return "pow_"+os.substring(0, 3)+"_"+arch+"_v2"+fileExtension+"";
     }
     
     public static double getAvgPoWTime() {

@@ -136,6 +136,7 @@ After starting it for the first time, you will be guided through the configurati
 | --- | --- | --- |
 | `-autostart` | `-autostart` | skips main menu and looking updates, allowing you to instantly start the spammer |
 | `-offline` | `-offline` | spam your own spam instead of [iotaspam.com](http://iotaspam.com) spam (you won't receive rewards) |
+| `-testnet` | `-testnet` | spam on the testnet |
 | `-email` | `-email bob@example.org` | automatically try to sign in using this email |
 | `-pass` | `-pass hunter2` | automatically try to sign in using this password (requires you to use `-email`) |
 

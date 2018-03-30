@@ -10,11 +10,12 @@ import isf.ui.UIQuestion;
 public class Main {
 	
 	private static final UIManager UIM = new UIManager("Main");
-	private static boolean onlineMode;
-	
+	private static boolean onlineMode, testnetMode;
+
 	public static void main(String[] args) {
 
-        onlineMode = findParameterIndex("-offline", args) == -1;
+		onlineMode = findParameterIndex("-offline", args) == -1;
+		testnetMode = findParameterIndex("-testnet", args) != -1;
 
         UIM.print("\n"+UIManager.ANSI_BOLD+String.format(R.STR.getString("main_welcome"), buildFullVersion()));
 		Configs.loadOrGenerate();
@@ -23,14 +24,17 @@ public class Main {
 
 		mainMenu(findParameterIndex("-autostart", args) != -1);
 
-		if(!onlineMode)
+        if(testnetMode)
+            UIM.logWrn(R.STR.getString("main_testnet_mode"));
+
+        if(!onlineMode)
             UIM.logWrn(R.STR.getString("main_offline_mode"));
 
 		if(Configs.getBln(P.POW_USE_GO_MODULE))
 			GOldDiggerLocalPoW.downloadPowIfNonExistent();
-		
+
 		APIManager.requestSpamParameters();
-		
+
 		NodeManager.init();
 
         UIM.logDbg(R.STR.getString("nodes_waiting"));
@@ -44,7 +48,7 @@ public class Main {
         UploadDataManager.start();
 		new SpamThread().init();
         Logger.init();
-    	
+
     	Runtime.getRuntime().addShutdownHook(new Thread() {
     		@Override
     		public void run() {
@@ -72,7 +76,7 @@ public class Main {
                 return i;
         return -1;
     }
-	
+
 	public static void mainMenu(boolean autostart) {
 
 	    if(autostart) {
@@ -95,22 +99,26 @@ public class Main {
 		} while (!command.equals("s"));
         UIM.printUpdates();
 	}
-	
+
 	public static String getVersion() {
 		return "v1.0";
 	}
-	
+
 	public static String getBuild() {
-		return "10";
+		return "11";
 	}
-	
+
 	public static String buildFullVersion() {
 		return getVersion() + "." + getBuild();
 	}
 
 	public static boolean isInOnlineMode() {
-	    return onlineMode;
-    }
+		return onlineMode;
+	}
+
+	public static boolean isInTestnetMode() {
+		return testnetMode;
+	}
 
     public static void setOnlineMode(boolean onlineMode) {
         Main.onlineMode = onlineMode;

@@ -13,7 +13,10 @@ func main() {
 
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
-	giota.PowProcs, _ = strconv.Atoi(scanner.Text());
+	giota.PowProcs, _ = strconv.Atoi(scanner.Text())
+
+	scanner.Scan()
+	mwm, _ := strconv.Atoi(scanner.Text())
 
 	powName, pow := giota.GetBestPoW()
 	fmt.Println(powName)
@@ -29,7 +32,7 @@ func main() {
 		tx.AttachmentTimestampLowerBound = ""
 		tx.AttachmentTimestampUpperBound = maxTimestampTrytes
 
-		tx.Nonce, _ = pow(tx.Trytes(), int(14))
+		tx.Nonce, _ = pow(tx.Trytes(), int(mwm))
 
 		fmt.Println(tx.Trytes())
 	}
