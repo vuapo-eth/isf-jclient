@@ -14,6 +14,7 @@ import isf.APIManager;
 import isf.Configs;
 import isf.FileManager;
 import isf.P;
+import java.util.Scanner;
 
 public class UIManager {
 	
@@ -127,7 +128,7 @@ public class UIManager {
 	private static void pause(int s) {
 		pauseUntil = System.currentTimeMillis()+s*1000;
 	}
-	
+
 	public String readLine() {
 		Scanner scanner = new Scanner(System.in);
         ORIGINAL_STREAM.print("\n  > ");
