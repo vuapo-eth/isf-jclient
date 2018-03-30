@@ -147,4 +147,4 @@ If you want to compile the GO proof-of-work module yourself instead of downloadi
 1. [install go](https://golang.org/doc/install)
 2. install the official iota go library [GIOTA](https://github.com/iotaledger/giota#install): `go get -u github.com/iotaledger/giota`
 3. compile the pow.go file in your spammers directory (**this** repository, not the giota repository): `go build pow.go`
-4. rename the compiled into: `pow_[first three letters of os name]_[os architecture]_v2`, (make it a .exe if you have Windows) examples are: `pow_lin_amd64` or `pow_win_386.exe`
+4. rename the compiled into: `pow_[first three letters of os name]_[os architecture]_v2`, (make it a .exe if you have Windows) examples are: `pow_lin_amd64_v2` or `pow_win_386_v2.exe`
