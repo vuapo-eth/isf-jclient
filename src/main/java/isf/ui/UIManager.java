@@ -140,12 +140,10 @@ public class UIManager {
 		pauseUntil = System.currentTimeMillis()+s*1000;
 	}
 	
-	public String readLine() {
-		print("");
-                Scanner scanner = new Scanner(System.in);
-                ORIGINAL_STREAM.print("  > ");
+	public String readLine(String msg) {
+		Scanner scanner = new Scanner(System.in);
+        ORIGINAL_STREAM.print("\n  > ");
 		String line = scanner.nextLine();
-		print("");
 		return line;
 	}
 	
