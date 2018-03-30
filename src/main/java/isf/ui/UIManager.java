@@ -13,6 +13,7 @@ import isf.APIManager;
 import isf.Configs;
 import isf.FileManager;
 import isf.P;
+import java.util.Scanner;
 
 public class UIManager {
 	
@@ -140,9 +141,9 @@ public class UIManager {
 	}
 	
 	public String readLine(String msg) {
-		print("");
-		String line = System.console().readLine(msg);
-		print("");
+		Scanner scanner = new Scanner(System.in);
+        ORIGINAL_STREAM.print("\n  > ");
+		String line = scanner.nextLine();
 		return line;
 	}
 	
@@ -157,7 +158,7 @@ public class UIManager {
 			if(answer != null)
 				print(ANSI_BOLD + ANSI_YELLOW+(answer.length() == 0 ? "please answer the above question" : "answer '"+answer+"' is not a valid answer"));
 			print("\n"+ANSI_BOLD+question.getQuestion());
-			answer = question.hidesInput() ? readPassword("  > ") : readLine("  > ");
+			answer = question.hidesInput() ? readPassword("  > ") : readLine();
 			if(!question.isCaseSensitive()) answer = answer.toLowerCase();
 		} while(!question.isAnswer(answer));
 		return answer;
