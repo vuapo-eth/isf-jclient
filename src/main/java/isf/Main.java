@@ -105,7 +105,7 @@ public class Main {
 	}
 
 	public static String getBuild() {
-		return "11";
+		return "12";
 	}
 
 	public static String buildFullVersion() {
