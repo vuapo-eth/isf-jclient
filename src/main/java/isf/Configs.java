@@ -47,7 +47,8 @@ public class Configs {
 				nodeInput = UIM.askQuestion(UIQuestion.Q_NODES);
 				if(nodeInput.length() > 0) {
 					NodeManager.addNode(nodeInput, false);
-					FileManager.write("nodelist.cfg", NodeManager.buildNodesFileHeader() + NodeManager.buildNodeListString());
+					FileManager.write("nodelist.cfg", NodeManager.buildNodesFileHeader(false) + NodeManager.buildNodeListString());
+					FileManager.write("nodelist_testnet.cfg", NodeManager.buildNodesFileHeader(true));
 				}
 			} while(nodeInput.length() > 0 && UIM.askForBoolean(R.STR.getString("config_question_add_node")));
 		}

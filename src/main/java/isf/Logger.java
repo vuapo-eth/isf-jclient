@@ -111,6 +111,8 @@ public class Logger {
 			JSONObject obj = new JSONArray(jsonString).getJSONObject(0);
 			
 			priceUsd = obj.getDouble("price_usd");
+			if(SpamThread.isPaused()) return;
+
 			final double change24h = obj.getDouble("percent_change_24h");
 
 			final String priceUsdString = df.format(priceUsd);

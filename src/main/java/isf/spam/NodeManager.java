@@ -441,22 +441,18 @@ public class NodeManager {
 	}
 
 	public static void loadNodeList() {
-        ArrayList<String> newNodeList = new ArrayList<>();
+	    final String nodeListFileName = buildNodeListFileName();
 
-		if(Main.isInTestnetMode()) {
-		    addNode(newNodeList, "https://nodes.testnet.iota.org:443", true);
-            nodeList = newNodeList;
-		    return;
-        }
+        ArrayList<String> newNodeList = new ArrayList<>();
 
 		uim.logDbg(R.STR.getString("nodes_download_remote"));
 
-		if(!FileManager.exists("nodelist.cfg"))
-		    FileManager.write("nodelist.cfg", buildNodesFileHeader());
+		if(!FileManager.exists(nodeListFileName))
+		    FileManager.write(nodeListFileName, buildNodesFileHeader(Main.isInTestnetMode()));
 
-        String nodelist = FileManager.read("nodelist.cfg");
+        String nodelist = FileManager.read(nodeListFileName);
 		addToNodeList(newNodeList, nodelist.replace(" ", ""));
-		if(Configs.getBln(P.NODES_THIRD_PARTY_NODE_LIST)) NodeManager.importRemoteNodeList(newNodeList);
+		if(Configs.getBln(P.NODES_THIRD_PARTY_NODE_LIST) || Main.isInTestnetMode()) NodeManager.importRemoteNodeList(newNodeList);
 		nodeList = newNodeList;
 		
 		shuffleNodeList();
@@ -468,7 +464,16 @@ public class NodeManager {
         }
 	}
 
-    public static String buildNodesFileHeader() {
+	public static String buildNodeListFileName() {
+	    return Main.isInTestnetMode() ? "nodelist_testnet.cfg" : "nodelist.cfg";
+    }
+
+    public static String buildNodesFileHeader(boolean testnet) {
+	    if(testnet) {
+            return "# " + String.format(R.STR.getString("nodes_file_header_testnet"),
+                    R.URL.getString("node_format"),
+                    R.URL.getString("node_example_testnet")) + "\n\n";
+        }
         return "# " + String.format(R.STR.getString("nodes_file_header"),
                 R.URL.getString("node_format"),
                 R.URL.getString("node_example_1"),

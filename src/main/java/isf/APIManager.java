@@ -27,7 +27,6 @@ public class APIManager {
 	private static final UIManager uim = new UIManager("API-Mngr");
 
 	private static final String SPAM_FUND_API_URL = String.format(R.URL.getString("spam_fund_api"), Main.getVersion());
-	private static final String THIRD_PARTY_NODE_LIST = R.URL.getString("node_list");;
 	public static final String CMC_API_IOTA = R.URL.getString("cmc_iota_ticker");
     private static String isf_email = null, isf_password = null;
 
@@ -241,10 +240,10 @@ public class APIManager {
 		
 		while(arr == null && tries-- > 0) {
 			try {
-				arr = new JSONArray(request(THIRD_PARTY_NODE_LIST, ""));
+				arr = new JSONArray(request(R.URL.getString("node_list" + (Main.isInTestnetMode() ? "_testnet" : "")), ""));
 			} catch(Throwable t) {
 				if(tries == 0) {
-					uim.logWrn(String.format(R.STR.getString("api_download_node_list_failed"), THIRD_PARTY_NODE_LIST));
+					uim.logWrn(String.format(R.STR.getString("api_download_node_list_failed"), R.URL.getString("node_list")));
 					uim.logException(t, false);
 				} else {
 					sleep(5000);
