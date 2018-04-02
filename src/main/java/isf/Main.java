@@ -12,10 +12,12 @@ public class Main {
 	private static final UIManager UIM = new UIManager("Main");
 	private static boolean onlineMode, testnetMode;
 
+	public static final ThreadGroup SUPER_THREAD = new ThreadGroup( "Super-Thread" );
+
 	public static void main(String[] args) {
 
-		onlineMode = findParameterIndex("-offline", args) == -1;
 		testnetMode = findParameterIndex("-testnet", args) != -1;
+		onlineMode = !testnetMode && findParameterIndex("-offline", args) == -1;
 
         UIM.print("\n"+UIManager.ANSI_BOLD+String.format(R.STR.getString("main_welcome"), buildFullVersion()));
 		Configs.loadOrGenerate();
@@ -26,8 +28,7 @@ public class Main {
 
         if(testnetMode)
             UIM.logWrn(R.STR.getString("main_testnet_mode"));
-
-        if(!onlineMode)
+		else if(!onlineMode)
             UIM.logWrn(R.STR.getString("main_offline_mode"));
 
 		if(Configs.getBln(P.POW_USE_GO_MODULE))
@@ -49,18 +50,18 @@ public class Main {
 		new SpamThread().init();
         Logger.init();
 
-    	Runtime.getRuntime().addShutdownHook(new Thread() {
+    	Runtime.getRuntime().addShutdownHook(new Thread(Main.SUPER_THREAD, "ShutDownHook") {
     		@Override
     		public void run() {
                 UIM.logDbg(R.STR.getString("main_terminate"));
-    			AddressManager.updateTails();
-
+                GOldDiggerLocalPoW.shutDown();
     			do {
     			    int amountQueued = TxBroadcaster.getAmountQueued();
     			    if(amountQueued == 0) break;
                     UIM.logDbg(String.format(R.STR.getString("main_terminate_broadcast"), amountQueued));
                     try { sleep(1000); } catch(InterruptedException e) {}
                 } while (true);
+                AddressManager.updateTails();
     		}
     	});
 	}
@@ -105,7 +106,7 @@ public class Main {
 	}
 
 	public static String getBuild() {
-		return "12";
+		return "13";
 	}
 
 	public static String buildFullVersion() {

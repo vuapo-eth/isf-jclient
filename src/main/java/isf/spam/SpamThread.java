@@ -30,7 +30,7 @@ public class SpamThread extends Thread {
 	};
 
     public SpamThread() {
-        super("SpamThread");
+        super(Main.SUPER_THREAD, "SpamThread");
     }
 
     public void init() {

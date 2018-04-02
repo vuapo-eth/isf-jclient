@@ -1,5 +1,7 @@
 package isf.logic;
 
+import isf.Main;
+
 import java.util.ArrayList;
 
 public class CronJobManager extends Thread {
@@ -8,6 +10,7 @@ public class CronJobManager extends Thread {
 	private final static CronJobManager TM = new CronJobManager();
 	
 	public CronJobManager() {
+		super(Main.SUPER_THREAD, "CronJobManager");
 		start();
 	}
 	

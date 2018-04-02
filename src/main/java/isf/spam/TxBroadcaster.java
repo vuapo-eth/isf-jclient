@@ -1,5 +1,6 @@
 package isf.spam;
 
+import isf.Main;
 import isf.logic.TimeAbortCall;
 import jota.dto.response.GetAttachToTangleResponse;
 
@@ -23,7 +24,7 @@ public class TxBroadcaster {
 			}
 		};
 		
-		new Thread() {
+		new Thread(Main.SUPER_THREAD, "TxBroadcaster") {
 			@Override
 			public void run() {
                 amountQueued++;

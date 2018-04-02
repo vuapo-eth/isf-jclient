@@ -2,8 +2,10 @@ package isf;
 
 import java.text.DecimalFormat;
 
+import iota.PearlDiver;
 import isf.logic.CronJob;
 import isf.logic.CronJobManager;
+import isf.logic.TimeAbortCall;
 import isf.spam.AddressManager;
 import isf.spam.NodeManager;
 import isf.spam.SpamThread;
@@ -99,8 +101,19 @@ public class Logger {
 		uim.logInf(">>> PERFORMANCE REPORT >>>   PoW: " + df2.format(GOldDiggerLocalPoW.getAvgPoWTime()) + "s"
 				+" | " + (powPercentage > 95 ? UIManager.ANSI_GREEN : (powPercentage < 75) ? UIManager.ANSI_RED : "") +"Efficiency: "+df2.format(powPercentage)+"%"+UIManager.ANSI_RESET
 				+ " | GetTips: "+df2.format(NodeManager.getAvgTxsToApproveTime())+"s | TipPool: "+
-			(TipPool.gttarsQueueSize() == 0 ? UIManager.ANSI_RED : "")+TipPool.gttarsQueueSize()+UIManager.ANSI_RESET+"/"+TipPool.gttarsLimit()+"");
+			(TipPool.gttarsQueueSize() == 0 ? UIManager.ANSI_RED : "")+TipPool.gttarsQueueSize()+UIManager.ANSI_RESET+"/"+TipPool.gttarsLimit()
+                +" | Threads: " + buildThreadString());
 	}
+
+	private static String buildThreadString() {
+	    return "M"+Main.SUPER_THREAD.activeCount() + "/P" +
+                PearlDiver.POW_THREAD.activeCount() + "/A" +
+                TimeAbortCall.TIME_ABORT_CALL_THREAD.activeCount() + "/C" +
+                CronJob.CRONJOB_THREAD.activeCount() + "/T" +
+                TipPool.TIP_POOL_THREAD_GROUP.activeCount() + "/N" +
+                NodeManager.CONNECT_TO_ANY_NODE_THREAD_GROUP.activeCount() + "/S" +
+                NodeManager.DO_SYNC_CHECK_THREAD_GROUP.activeCount();
+    }
 
 	private static void updateIotaTicker() {
 		DecimalFormat df = new DecimalFormat("###,##0.00"), dfInt = new DecimalFormat("###,##0");

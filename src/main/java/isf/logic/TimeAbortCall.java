@@ -5,10 +5,13 @@ import isf.ui.UIManager;
 
 public abstract class TimeAbortCall {
 	private static final UIManager UIM = new UIManager("TimeAbrt");
+	public static final ThreadGroup TIME_ABORT_CALL_THREAD = new ThreadGroup("TimeAbortCallThread");
 
 	private final String actionName;
 	private final int tolerance;
-	
+
+    private static long threadIdCounter = 0;
+
 	private int fails;
 	
 	public TimeAbortCall(String actionName, int tolerance) {
@@ -21,7 +24,7 @@ public abstract class TimeAbortCall {
 		final ObjectWrapper res = new ObjectWrapper(false);
 		final ObjectWrapper success = new ObjectWrapper(false);
 		
-		Thread t = new Thread() {
+		Thread t = new Thread(TIME_ABORT_CALL_THREAD, "TimeAbortCall-"+(threadIdCounter++)) {
 			@Override
 			public void run() {
 				res.o = onCall();

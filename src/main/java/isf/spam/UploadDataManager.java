@@ -2,6 +2,7 @@ package isf.spam;
 
 import isf.APIManager;
 import isf.Configs;
+import isf.Main;
 import isf.P;
 import isf.ui.R;
 import isf.ui.UIManager;
@@ -16,7 +17,7 @@ public class UploadDataManager {
 	private static LinkedList<String> wikipediaArticles = new LinkedList<>();
 
 	public static void start() {
-	    if(Configs.getBln(P.SPAM_WIKIPEDIA_MESSAGE)) new Thread() {
+	    if(Configs.getBln(P.SPAM_WIKIPEDIA_MESSAGE)) new Thread(Main.SUPER_THREAD, "UploadDataManager") {
             @Override
             public void run() {
                 while(true) {

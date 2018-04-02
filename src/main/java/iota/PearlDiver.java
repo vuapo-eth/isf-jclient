@@ -8,6 +8,8 @@ import static jota.pow.JCurl.NUMBER_OF_ROUNDSP81;
  */
 public class PearlDiver {
 
+    public static final ThreadGroup POW_THREAD = new ThreadGroup("PoW-Thread");
+
     enum State {
         RUNNING,
         CANCELLED,
@@ -130,7 +132,7 @@ public class PearlDiver {
         while (numberOfThreads-- > 0) {
 
             final int threadIndex = numberOfThreads;
-            Thread worker = (new Thread() { public void run() {
+            Thread worker = (new Thread(POW_THREAD, "") { public void run() {
 
             	setPriority(Thread.MAX_PRIORITY);
             	

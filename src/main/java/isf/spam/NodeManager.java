@@ -1,6 +1,5 @@
 package isf.spam;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +22,9 @@ import jota.dto.response.StoreTransactionsResponse;
 import jota.model.Transaction;
 
 public class NodeManager {
+
+    public static final ThreadGroup CONNECT_TO_ANY_NODE_THREAD_GROUP = new ThreadGroup("ConnectToAnyNodeThread"),
+            DO_SYNC_CHECK_THREAD_GROUP = new ThreadGroup("DoSyncCheckThread");
 
 	private static final UIManager uim = new UIManager("NodeMngr");
 	private static int DEPTH = 1;
@@ -113,7 +115,7 @@ public class NodeManager {
 		if(parNodeSyncedMsg != null)
             uim.logDbg(String.format(R.STR.getString("nodes_action_changing"), buildNodeAddress(api), api, parNodeSyncedMsg));
 
-		new Thread("connectToAnyNode("+api+")") {
+		new Thread(CONNECT_TO_ANY_NODE_THREAD_GROUP,"connectToAnyNode("+api+")") {
 			@Override
 			public void run() {
 				while(!connectToNode(getNextNode(), api)) {
@@ -386,7 +388,7 @@ public class NodeManager {
 	}
 
 	private static void doSyncCheck(final int api) {
-		new Thread("doSyncCheck("+api+")") {
+		new Thread(DO_SYNC_CHECK_THREAD_GROUP,"doSyncCheck("+api+")") {
 			@Override
 			public void run() {
 				String error = isNodeSynced(api);

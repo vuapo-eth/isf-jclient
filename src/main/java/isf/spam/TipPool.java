@@ -3,11 +3,14 @@ package isf.spam;
 import java.util.EmptyStackException;
 import java.util.Stack;
 
+import isf.Main;
 import isf.logic.ObjectWrapper;
 import isf.logic.TimeAbortCall;
 import jota.dto.response.GetTransactionsToApproveResponse;
 
 public class TipPool {
+
+	public static final ThreadGroup TIP_POOL_THREAD_GROUP = new ThreadGroup("TipPoolThread");
 
 	private static Stack<GetTransactionsToApproveResponse> gttars = new Stack<GetTransactionsToApproveResponse>();
 	private static int gttarsLimit = 5;
@@ -20,7 +23,7 @@ public class TipPool {
 		for(int i = 0; i < NodeManager.getAmountOfAPIs(); i++) {
 			final int api = i;
 			
-			new Thread() {
+			new Thread(TIP_POOL_THREAD_GROUP, "TipPool") {
 				@Override
 				public void run() {
 					

@@ -44,6 +44,10 @@ public class GOldDiggerLocalPoW implements IotaLocalPoW {
 	private static boolean goPowAvailable = false;
     private static final PearlDiver PEARL_DIVER = new PearlDiver();
     private static final File POW_FILE = new File(determinePowFileName());
+    private static Thread powThread;
+
+    // input/output
+    private static Scanner scanner;
 
     @Override
     public String performPoW(String trytes, int minWeightMagnitude) {
@@ -129,7 +133,7 @@ public class GOldDiggerLocalPoW implements IotaLocalPoW {
 
     public static void start(int threads) {
 
-        MWM = Main.isInTestnetMode() ? 13 : 14;
+        MWM = Main.isInTestnetMode() ? 9 : 14;
 
 		if(!Configs.getBln(P.POW_USE_GO_MODULE)) {
 			UIM.logWrn(R.STR.getString("pow_go_user_refused_use"));
@@ -155,16 +159,16 @@ public class GOldDiggerLocalPoW implements IotaLocalPoW {
 
         InputStream in = proc.getInputStream();
         final OutputStream out = proc.getOutputStream();
-		final Scanner s = new Scanner(in);
+        scanner = new Scanner(in);
 		scannerOpen.o = true;
-		s.useDelimiter("\n");
+        scanner.useDelimiter("\n");
         threads = Math.min(Math.max(1, threads), Runtime.getRuntime().availableProcessors());
 
         try {
             out.write((threads + "\n" + MWM + "\n").getBytes());
             out.flush();
 
-			String powName = s.hasNext() ? s.next().replace("\n", "") : "";
+			String powName = scanner.hasNext() ? scanner.next().replace("\n", "") : "";
 			if(powName.equals("PowGo"))
 			    UIM.logWrn(R.STR.getString("pow_go_compilation_incomplete"));
 			else
@@ -176,7 +180,7 @@ public class GOldDiggerLocalPoW implements IotaLocalPoW {
 
         powTrytes.o = "";
 
-    	final Thread t = new Thread() {
+    	powThread = new Thread(Main.SUPER_THREAD, "GOldDiggerLocalPoW") {
 
     		public void run() {
 
@@ -187,7 +191,7 @@ public class GOldDiggerLocalPoW implements IotaLocalPoW {
         	        try {
         				out.write((powTrytes.o+"\n").getBytes());
         				out.flush();
-                        powTrytes.o = s.hasNext() ? s.next().replace("\n", "") : null;
+                        powTrytes.o = scanner.hasNext() ? scanner.next().replace("\n", "") : null;
                         powSuccess.o = true;
         			} catch (IOException | IllegalStateException e) {
         				UIM.logDbg(R.STR.getString("pow_go_communication_failed") + e.getMessage());
@@ -198,15 +202,12 @@ public class GOldDiggerLocalPoW implements IotaLocalPoW {
     		}
     	};
 
-    	t.start();
+        powThread.start();
+    }
 
-    	Runtime.getRuntime().addShutdownHook(new Thread() {
-    		@Override
-    		public void run() {
-    			t.interrupt();
-    			s.close();
-    		}
-    	});
+    public static void shutDown() {
+        if(powThread != null) powThread.interrupt();
+        if(scanner != null) scanner.close();
     }
 
     private static String determinePowFileName() {
