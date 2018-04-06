@@ -16,6 +16,8 @@ public class UploadDataManager {
     private static UIManager UIM = new UIManager("UpldData");
 	private static LinkedList<String> wikipediaArticles = new LinkedList<>();
 
+	private static String transactionMessageTrytes = TrytesConverter.toTrytes("Get paid in iotas for supporting the tangle network by spamming transactions. For more information, visit: http://iotaspam.com/.");
+
 	public static void start() {
 	    if(Configs.getBln(P.SPAM_WIKIPEDIA_MESSAGE)) new Thread(Main.SUPER_THREAD, "UploadDataManager") {
             @Override
@@ -34,21 +36,27 @@ public class UploadDataManager {
             }
         }.start();
     }
+
+    public static void setTransactionMessage(String transactionMessage) {
+        final String trytes = TrytesConverter.toTrytes(transactionMessage);
+        transactionMessageTrytes = trytes.substring(0, Math.min(trytes.length(), 2186));
+    }
 	
 	public static String getNextData() {
         String wikipediaArticle = wikipediaArticles.poll();
-		return TrytesConverter.toTrytes("Get paid in iotas for supporting the tangle network by spamming transactions. For more information, visit: http://iotaspam.com/."
-                +(wikipediaArticle == null ? "":" >>>>> random wikipedia article: "+wikipediaArticle));
+        String nextData = transactionMessageTrytes +(wikipediaArticle == null ? "": wikipediaArticle);
+        nextData = nextData.substring(0, Math.min(nextData.length(), 2186));
+		return nextData;
 	}
 
     public static String randomWikipediaArticle() {
 
-        String jsonStr = APIManager.request(R.URL.getString("wikipedia_random"), null);
+        String jsonStr = APIManager.request(String.format(R.URL.getString("wikipedia_random"),(2186-transactionMessageTrytes.length())/2-120), null);
         JSONObject pages = new JSONObject(jsonStr).getJSONObject("query").getJSONObject("pages");
         JSONObject page = pages.getJSONObject(pages.keys().next());
 
         String title = page.getString("title").toUpperCase();
         String excerpt = page.getString("extract");
-        return title + " >>>>> " + excerpt.replace("–", "-");
+        return TrytesConverter.toTrytes(" >>>>> random wikipedia article: " + title + " >>>>> " + excerpt.replace("–", "-"));
     }
 }

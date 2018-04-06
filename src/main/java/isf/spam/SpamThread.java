@@ -25,7 +25,7 @@ public class SpamThread extends Thread {
 	private static final TimeAbortCall SPAM_BOMB = new TimeAbortCall("sending spam transaction", 1) {
 		@Override
 		public boolean onCall() {
-			return NodeManager.sendSpam();
+			return NodeManager.createSpam();
 		}
 	};
 

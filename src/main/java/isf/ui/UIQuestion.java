@@ -32,12 +32,19 @@ public abstract class UIQuestion {
         }
     }.setQuestion(R.STR.getString("question_spam_address"));
 
-    public static final UIQuestion Q_SPAM_TAG = new UIQuestion() {
-        @Override
-        public boolean isAnswer(String str) {
-            return VALID_TRYTES .matcher(str).find();
-        }
-    }.setQuestion(R.STR.getString("question_spam_tag"));
+	public static final UIQuestion Q_SPAM_TAG = new UIQuestion() {
+		@Override
+		public boolean isAnswer(String str) {
+			return VALID_TRYTES .matcher(str).find();
+		}
+	}.setQuestion(R.STR.getString("question_spam_tag"));
+
+	public static final UIQuestion Q_SPAM_MESSAGE = new UIQuestion() {
+		@Override
+		public boolean isAnswer(String str) {
+			return true;
+		}
+	}.setQuestion(R.STR.getString("question_spam_message")).setCaseSensitive(true);
 	
 	public static final UIQuestion Q_NODES = new UIQuestion() {
 		@Override

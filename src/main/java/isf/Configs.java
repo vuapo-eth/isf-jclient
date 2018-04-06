@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 import isf.spam.NodeManager;
+import isf.spam.UploadDataManager;
 import isf.ui.R;
 import org.apache.commons.lang3.StringUtils;
 import org.ini4j.Wini;
@@ -72,6 +73,8 @@ public class Configs {
 		
 		UIManager.toggleColors(getBln(P.LOG_COLORS_ENABLED));
 
+        UploadDataManager.setTransactionMessage(get(P.SPAM_OFFLINE_MESSAGE));
+
         // correct spam address if not correct
         final Pattern VALID_TRYTES = Pattern.compile("^[A-Z9]*$");
         String spamAddress = get(P.SPAM_OFFLINE_ADDRESS).toUpperCase();
@@ -87,7 +90,7 @@ public class Configs {
         // correct spam tag if not correct
         String spamTag = get(P.SPAM_OFFLINE_TAG).toUpperCase();
         final Pattern VALID_SPAM_TAG = Pattern.compile("^[A-Z9]{27}$");
-        if(!VALID_SPAM_ADDRESS.matcher(spamTag).find()) {
+        if(!VALID_SPAM_TAG.matcher(spamTag).find()) {
             if(!VALID_TRYTES.matcher(spamTag).find())
                 spamTag = "";
             spamTag = spamTag.substring(0, Math.min(spamTag.length(), 27));

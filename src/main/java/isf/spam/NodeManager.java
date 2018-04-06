@@ -120,7 +120,7 @@ public class NodeManager {
 			public void run() {
 				while(!connectToNode(getNextNode(), api)) {
 					if(nodeList.size() == 1) {
-						uim.logWrn(String.format(R.STR.getString("nodes_not_synced"), nodeList.get(0), 30));
+						uim.logWrn(String.format(R.STR.getString("nodes_not_synced"), nodeList.get(0), 30, buildNodeListFileName()));
 						NodeManager.sleep(30000);
 					} else {
 						NodeManager.sleep(3000);
@@ -141,7 +141,7 @@ public class NodeManager {
 
 	private static String getNextNode() {
 		if(nodeList.size() == 0) {
-		    uim.logErr(R.STR.getString("nodes_node_list_empty"));
+		    uim.logErr(String.format(R.STR.getString("nodes_node_list_empty"), buildNodeListFileName()));
 		    System.exit(0);
         }
 
@@ -222,7 +222,7 @@ public class NodeManager {
 		GetNodeInfoResponse getNodeInfoResponse = null;
 		do {
 			if(getNodeInfoResponse != null) {
-				connectToAnyNode(apiIndex, "latest milestone older than 10 minutes");
+				connectToAnyNode(apiIndex, R.STR.getString("nodes_old_milestone"));
 				api = getRotatedAPI();
 			}
 			getNodeInfoResponse = getNodeInfo(api, true);
@@ -235,14 +235,16 @@ public class NodeManager {
 		final ObjectWrapper api = new ObjectWrapper(parApi);
 		final ObjectWrapper res = new ObjectWrapper(null);
 
-		TimeAbortCall tb = new TimeAbortCall("requesting node info", 0) {
+		final String action = R.STR.getString("nodes_action_node_info");
+
+		TimeAbortCall tb = new TimeAbortCall(action, 0) {
 			@Override
 			public boolean onCall() {
 				try {
 					res.o = apis[(int)api.o].getNodeInfo();
 					return true;
 				} catch (Throwable e) {
-					api.o = handleThrowableFromIotaAPI("receive getNodeInfo", e, (int)api.o);
+					api.o = handleThrowableFromIotaAPI(action, e, (int)api.o);
 					return false;
 				}
 			}
@@ -259,7 +261,7 @@ public class NodeManager {
 			try {
 				transactions = apis[api].findTransactionsObjectsByHashes(hashes);
 			} catch (Throwable e) {
-				api = handleThrowableFromIotaAPI("find transactions", e, api);
+				api = handleThrowableFromIotaAPI(R.STR.getString("nodes_action_find_transactions"), e, api);
 			}
 		}
 		return transactions;
@@ -272,6 +274,8 @@ public class NodeManager {
 	public static GetTransactionsToApproveResponse getTransactionsToApprove(int api) {
 		GetTransactionsToApproveResponse getTransactionsToApproveResponse = null;
 
+		final String action = R.STR.getString("nodes_action_gtta");
+
 		long timeStarted = System.currentTimeMillis();
 		while(getTransactionsToApproveResponse == null) {
 			try {
@@ -279,9 +283,9 @@ public class NodeManager {
 				getTransactionsToApproveResponse = apis[api].getTransactionsToApprove(DEPTH);
 			} catch(IllegalStateException e) {
 				if(e.getMessage().contains("thread interrupted")) {}
-				else api = handleThrowableFromIotaAPI("get transactions to approve", e, api);
+				else api = handleThrowableFromIotaAPI(action, e, api);
 			} catch (Throwable e) {
-				api = handleThrowableFromIotaAPI("get transactions to approve", e, api);
+				api = handleThrowableFromIotaAPI(action, e, api);
 			}
 		}
         totalTimeGetTxsToApprove += System.currentTimeMillis()-timeStarted;
@@ -294,7 +298,7 @@ public class NodeManager {
 		if(e.getMessage()!= null && e.getMessage().contains("inconsistent")) {
 			if(++inconsistentTipsPairs[i] >= INCONSISTENT_TIPS_PAIR_TOLERANCE) {
 				inconsistentTipsPairs[i] = 0;
-				connectToAnyNode(i, "selected inconsistent tips pair "+INCONSISTENT_TIPS_PAIR_TOLERANCE+" times");
+				connectToAnyNode(i, String.format(R.STR.getString("nodes_inconsistent_tips_pair"), INCONSISTENT_TIPS_PAIR_TOLERANCE));
 			}
 			return getRotatedAPI();
 		}
@@ -319,10 +323,10 @@ public class NodeManager {
 		}
 
 		if(getNodeInfoResponse == null)
-			return "did not receive getNodeInfoResponse response within "+NODEINFO_DURATION_TOLERANCE+" seconds";
+			return String.format(R.STR.getString("nodes_no_node_info_response"), NODEINFO_DURATION_TOLERANCE);
 
 		if(Math.abs(getNodeInfoResponse.getLatestSolidSubtangleMilestoneIndex()-getNodeInfoResponse.getLatestMilestoneIndex()) > 3)
-			return "solid subtangle is not updated: lacking "+(getNodeInfoResponse.getLatestMilestoneIndex()-getNodeInfoResponse.getLatestSolidSubtangleMilestoneIndex())+" milestones behind";
+			return String.format(R.STR.getString("nodes_solid_subtangle_behind"),getNodeInfoResponse.getLatestMilestoneIndex()-getNodeInfoResponse.getLatestSolidSubtangleMilestoneIndex());
 
 		String milestone = getNodeInfoResponse.getLatestSolidSubtangleMilestone();
 		long secondsBehind = System.currentTimeMillis()/1000-findTractionsByHashes(new String[] {milestone}, api).get(0).getTimestamp();
@@ -341,12 +345,12 @@ public class NodeManager {
 
 		String[] hashes = {getTransactionsToApproveResponse.getBranchTransaction(), getTransactionsToApproveResponse.getTrunkTransaction()};
 		List<Transaction> transactions = findTractionsByHashes(hashes, api);
-		if(transactions.size() == 0) return "silly node pretends to not know tips it just provided";
+		if(transactions.size() == 0) return R.STR.getString("nodes_unknown_tips");
 		long newerTimestamp = Math.max(transactions.get(0).getAttachmentTimestamp(), transactions.get(1).getAttachmentTimestamp());
 		long tipAge = System.currentTimeMillis() /1000-newerTimestamp;
 
 		lastSyncCheck[api] = System.currentTimeMillis();
-		return tipAge > TIP_AGE_TOLERANCE ? "tips are "+tipAge+"s old, tolerance is set to " + TIP_AGE_TOLERANCE + "s" : null;
+		return tipAge > TIP_AGE_TOLERANCE ? String.format(R.STR.getString("nodes_old_tips"), tipAge, TIP_AGE_TOLERANCE) : null;
 	}
 
 	public static String buildNodeListString() {
@@ -362,9 +366,13 @@ public class NodeManager {
 		address = address.toLowerCase().replaceAll("/$", "");
 		if(address.length() == 0 || address.charAt(0) == '#') return;
 		if(VALID_NODE_ADDRESS_REGEX.matcher(address).find()) {
-			if(log) uim.logDbg("adding node to node list: '"+address+"'");
+			if(log) uim.logDbg(String.format(R.STR.getString("nodes_adding"), address));
 			nodeList.add(address);
-		} else if(log) uim.logWrn("address is not correct: '" + address + "'");
+		} else {
+		    final String addressIncorrectString = String.format(R.STR.getString("nodes_address_incorrect"), address);
+            if(log) uim.logWrn(addressIncorrectString);
+            else uim.logDbg(addressIncorrectString);
+        }
 	}
 
 	public static void addNode(String address, boolean log) {
@@ -424,20 +432,20 @@ public class NodeManager {
 			} catch (Throwable e) {
 				if(e.getMessage().contains("thread interrupted"))
 					throw(new InterruptedException());
-				api = handleThrowableFromIotaAPI("broadcast transaction", e, api);
+				api = handleThrowableFromIotaAPI(R.STR.getString("action_broadcast"), e, api);
 			}
 		}
 	}
 
-	public static boolean sendSpam() {
+	public static boolean createSpam() {
 
 		int api = getRotatedAPI();
 
 		try {
-			apis[api].sendSpam();
+			apis[api].createSpam();
 			return true;
 		} catch (Throwable e) {
-			api = handleThrowableFromIotaAPI("send spam transaction", e, api);
+			handleThrowableFromIotaAPI(R.STR.getString(R.STR.getString("nodes_action_create_spam")), e, api);
 			return false;
 		}
 	}
@@ -459,7 +467,7 @@ public class NodeManager {
 		
 		shuffleNodeList();
 		if(nodeList.size() > 0)
-            uim.logDbg("node list includes " + nodeList.size() + " nodes");
+            uim.logDbg(String.format(R.STR.getString("nodes_node_list_size"), nodeList.size()));
         else {
             uim.logErr(R.STR.getString("nodes_node_list_empty"));
             System.exit(0);

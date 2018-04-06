@@ -1,5 +1,6 @@
 package isf;
 
+import isf.spam.UploadDataManager;
 import isf.ui.R;
 import isf.ui.UIManager;
 import isf.ui.UIQuestion;
@@ -34,6 +35,16 @@ public enum P {
             spamAddress = spamAddress.substring(0, Math.min(spamAddress.length(), 27));
             spamAddress = spamAddress + StringUtils.repeat("9",27-spamAddress.length());
             SPAM_OFFLINE_TAG.set(spamAddress);
+        }
+    }),
+
+    SPAM_OFFLINE_MESSAGE("This spam was created using the iotaspam.com spammer in offline mode, therefore I am not receiving rewards for this spam.", new EditHandler() {
+        @Override
+        void edit() {
+            String spamMessage = UIM.askQuestion(UIQuestion.Q_SPAM_MESSAGE);
+            spamMessage = spamMessage.substring(0, Math.min(spamMessage.length(), 2186/2));
+            SPAM_OFFLINE_MESSAGE.set(spamMessage);
+            UploadDataManager.setTransactionMessage(spamMessage);
         }
     }),
 

@@ -2,6 +2,7 @@ package isf.spam;
 
 import isf.Main;
 import isf.logic.TimeAbortCall;
+import isf.ui.R;
 import jota.dto.response.GetAttachToTangleResponse;
 
 public class TxBroadcaster {
@@ -12,7 +13,7 @@ public class TxBroadcaster {
 		
 		if(res.getTrytes()[0] == null) return;
 		
-		final TimeAbortCall broadcastBomb = new TimeAbortCall("broadcasting tips", 10) {
+		final TimeAbortCall broadcastBomb = new TimeAbortCall(R.STR.getString("action_broadcast"), 10) {
 			@Override
 			public boolean onCall() {
 				try {

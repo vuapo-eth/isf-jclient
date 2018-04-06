@@ -6,6 +6,7 @@ import java.util.Stack;
 import isf.Main;
 import isf.logic.ObjectWrapper;
 import isf.logic.TimeAbortCall;
+import isf.ui.R;
 import jota.dto.response.GetTransactionsToApproveResponse;
 
 public class TipPool {
@@ -27,7 +28,7 @@ public class TipPool {
 				@Override
 				public void run() {
 					
-					TimeAbortCall tb = new TimeAbortCall("requesting transactions to approve (tips)", 10) {
+					TimeAbortCall tb = new TimeAbortCall(R.STR.getString("action_request_tips"), 10) {
 						@Override
 						public boolean onCall() {
 							GetTransactionsToApproveResponse gttar = NodeManager.getTransactionsToApprove(api);

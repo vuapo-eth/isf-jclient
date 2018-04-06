@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 import isf.*;
 import isf.logic.CronJob;
 import isf.logic.CronJobManager;
+import isf.ui.R;
 import isf.ui.UIManager;
 import org.apache.commons.lang3.StringUtils;
 
@@ -126,7 +127,7 @@ public class AddressManager {
 		String tailTrytes = "";
 		while(tailTrytes.length() < 81 - addressBase.length())
 			tailTrytes += (char)((int)'A'+(int)(Math.random()*26));
-        UIM.logDbg("changing spam address to "  + addressBase + tailTrytes);
+        UIM.logDbg(String.format(R.STR.getString("address_changing"),addressBase + tailTrytes));
 		
 		tails.add(new Tail(tailTrytes, 0, 0, 0, false));
 		writeTailsIntoFile();
@@ -140,7 +141,7 @@ public class AddressManager {
 			tail.update();
 			writeTailsIntoFile();
 			preSessionTailTxCount = tail.getTotalTxs();
-            UIM.logDbg("picking up address from last session '"+getSpamAddress()+"' ("+tail.getConfirmedTxs() + "/" + tail.getTotalTxs() + " txs)");
+			UIM.logDbg(String.format(R.STR.getString("address_last_session"), getSpamAddress(), tail.getConfirmedTxs(), tail.getTotalTxs()));
 		} else {
 			createNewAddressTail();
 		}

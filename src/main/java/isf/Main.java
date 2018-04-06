@@ -8,7 +8,9 @@ import isf.ui.UIManager;
 import isf.ui.UIQuestion;
 
 public class Main {
-	
+
+	private static final String VERSION = "v1.0", BUILD = "13";
+
 	private static final UIManager UIM = new UIManager("Main");
 	private static boolean onlineMode, testnetMode;
 
@@ -85,7 +87,7 @@ public class Main {
             return;
         }
 
-        UIM.print(String.format(R.STR.getString("main_skip_menu_instructions"), UIManager.ANSI_BOLD+"java -jar isf-jclient-[VERSION].jar -autostart" + UIManager.ANSI_RESET));
+        UIM.print(String.format(R.STR.getString("main_skip_menu_instructions"), UIManager.ANSI_BOLD+R.STR.getString("main_option_autostart")+ UIManager.ANSI_RESET));
 	    String command;
 		do {
             command = UIM.askQuestion(UIQuestion.Q_START_MENU);
@@ -102,11 +104,11 @@ public class Main {
 	}
 
 	public static String getVersion() {
-		return "v1.0";
+		return VERSION;
 	}
 
 	public static String getBuild() {
-		return "13";
+		return BUILD;
 	}
 
 	public static String buildFullVersion() {

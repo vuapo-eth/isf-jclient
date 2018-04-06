@@ -24,7 +24,7 @@ public class IotaAPI extends jota.IotaAPI {
 		super(builder);
 	}
 	
-	public void sendSpam() throws ArgumentException {
+	public void createSpam() throws ArgumentException {
 		
 		ArrayList<Transfer> transfers = new ArrayList<Transfer>();
 		String message = UploadDataManager.getNextData();

@@ -32,7 +32,7 @@ public class Logger {
 
 		final int logInterval = Configs.getInt(P.LOG_INTERVAL);
 		final int performanceReportInterval = Configs.getInt(P.LOG_PERFORMANCE_REPORT_INTERVAL);
-		uim.logDbg("starting logger, logs will appear in " + logInterval + "s intervals");
+		uim.logDbg(String.format(R.STR.getString("log_starting"), logInterval));
 
 		if(Main.isInOnlineMode()) {
             updateBalance();
@@ -98,11 +98,15 @@ public class Logger {
 		if(SpamThread.isPaused()) return;
 		DecimalFormat df2 = new DecimalFormat("#00.00");
 		double powPercentage = 100.0 * GOldDiggerLocalPoW.getAvgPoWTime() * SpamThread.getSpamSpeed() / 60;
-		uim.logInf(">>> PERFORMANCE REPORT >>>   PoW: " + df2.format(GOldDiggerLocalPoW.getAvgPoWTime()) + "s"
-				+" | " + (powPercentage > 95 ? UIManager.ANSI_GREEN : (powPercentage < 75) ? UIManager.ANSI_RED : "") +"Efficiency: "+df2.format(powPercentage)+"%"+UIManager.ANSI_RESET
-				+ " | GetTips: "+df2.format(NodeManager.getAvgTxsToApproveTime())+"s | TipPool: "+
-			(TipPool.gttarsQueueSize() == 0 ? UIManager.ANSI_RED : "")+TipPool.gttarsQueueSize()+UIManager.ANSI_RESET+"/"+TipPool.gttarsLimit()
-                +" | Threads: " + buildThreadString());
+
+		final String performanceReport = String.format(R.STR.getString("log_performance_report"),
+                df2.format(GOldDiggerLocalPoW.getAvgPoWTime()),
+                (powPercentage > 95 ? UIManager.ANSI_GREEN : (powPercentage < 75) ? UIManager.ANSI_RED : "")+df2.format(powPercentage)+"%"+UIManager.ANSI_RESET,
+                df2.format(NodeManager.getAvgTxsToApproveTime()),
+                (TipPool.gttarsQueueSize() == 0 ? UIManager.ANSI_RED : "")+TipPool.gttarsQueueSize()+UIManager.ANSI_RESET+"/"+TipPool.gttarsLimit(),
+                buildThreadString());
+
+		uim.logInf(performanceReport);
 	}
 
 	private static String buildThreadString() {
