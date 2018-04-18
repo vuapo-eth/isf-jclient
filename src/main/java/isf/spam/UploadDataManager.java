@@ -7,6 +7,7 @@ import isf.P;
 import isf.ui.R;
 import isf.ui.UIManager;
 import jota.utils.TrytesConverter;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.json.JSONObject;
 
 import java.util.LinkedList;
@@ -38,7 +39,7 @@ public class UploadDataManager {
     }
 
     public static void setTransactionMessage(String transactionMessage) {
-        final String trytes = TrytesConverter.toTrytes(transactionMessage);
+        final String trytes = TrytesConverter.toTrytes(transactionMessage.replaceAll("\\n", "\n"));
         transactionMessageTrytes = trytes.substring(0, Math.min(trytes.length(), 2186));
     }
 	
@@ -57,6 +58,6 @@ public class UploadDataManager {
 
         String title = page.getString("title").toUpperCase();
         String excerpt = page.getString("extract");
-        return TrytesConverter.toTrytes(" >>>>> random wikipedia article: " + title + " >>>>> " + excerpt.replace("–", "-"));
+        return TrytesConverter.toTrytes("\n\n'" + title + "'\n\n" + excerpt.replace("–", "-"));
     }
 }

@@ -121,7 +121,7 @@ public class UIManager {
 		
 		if(terminate) {
 			logDbg("program will be terminated now due to above error");
-			System.exit(0);
+			System.exit(1);
 		}
 	}
 	

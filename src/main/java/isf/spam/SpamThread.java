@@ -7,6 +7,7 @@ import isf.P;
 import isf.logic.CronJob;
 import isf.logic.CronJobManager;
 import isf.logic.TimeAbortCall;
+import isf.ui.R;
 import org.json.JSONObject;
 
 import iota.GOldDiggerLocalPoW;
@@ -22,7 +23,7 @@ public class SpamThread extends Thread {
 	
 	private static final UIManager UIM = new UIManager("SpamThrd");
 	
-	private static final TimeAbortCall SPAM_BOMB = new TimeAbortCall("sending spam transaction", 1) {
+	private static final TimeAbortCall SPAM_BOMB = new TimeAbortCall(R.STR.getString("nodes_action_create_spam"), 1) {
 		@Override
 		public boolean onCall() {
 			return NodeManager.createSpam();
@@ -76,10 +77,10 @@ public class SpamThread extends Thread {
 		
 		if(obj.getBoolean("pause") && !SpamThread.isPaused()) {
 			timePauseStarted = System.currentTimeMillis();
-			UIM.logWrn("spamming paused remotely by iotaspam.com: " + obj.getString("message"));
+			UIM.logWrn(R.STR.getString("spam_paused_remotely") + ": " + obj.getString("message"));
 		} else if(!obj.getBoolean("pause") && SpamThread.isPaused()) {
 			totalPauses += System.currentTimeMillis() - timePauseStarted;
-			UIM.logWrn("spamming restarted remotely by iotaspam.com");
+			UIM.logWrn(R.STR.getString("spam_restarted_remotely"));
 		}
 		
 		SpamThread.setPaused(obj.getBoolean("pause"));

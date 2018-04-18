@@ -1,5 +1,6 @@
 package isf.logic;
 
+import isf.Logger;
 import isf.ui.R;
 import isf.ui.UIManager;
 
@@ -23,7 +24,7 @@ public abstract class TimeAbortCall {
 
 		final ObjectWrapper res = new ObjectWrapper(false);
 		final ObjectWrapper success = new ObjectWrapper(false);
-		
+
 		Thread t = new Thread(TIME_ABORT_CALL_THREAD, "TimeAbortCall-"+(threadIdCounter++)) {
 			@Override
 			public void run() {
@@ -32,7 +33,19 @@ public abstract class TimeAbortCall {
 				synchronized (res) { res.notify(); }
 			}
 		};
-		t.start();
+
+		while(true) {
+            try {
+                t.start();
+                break;
+            } catch (OutOfMemoryError e) {
+                UIM.logErr(R.STR.getString("thread_out_of_memory"));
+                UIM.logDbg("Heap: " + Logger.buildHeapString());
+                UIM.logDbg("Threads: " + Logger.buildThreadString());
+                UIM.logException(e, false);
+                try { Thread.sleep(10000); } catch (InterruptedException ie) { return false; }
+            }
+        }
 		
 		try {
 			synchronized (res) { res.wait(timeLimitSeconds*1000); }

@@ -61,7 +61,7 @@ public class Main {
     			    int amountQueued = TxBroadcaster.getAmountQueued();
     			    if(amountQueued == 0) break;
                     UIM.logDbg(String.format(R.STR.getString("main_terminate_broadcast"), amountQueued));
-                    try { sleep(1000); } catch(InterruptedException e) {}
+                    try { sleep(5000); } catch(InterruptedException e) {} // TODO object.wait(...)
                 } while (true);
                 AddressManager.updateTails();
     		}

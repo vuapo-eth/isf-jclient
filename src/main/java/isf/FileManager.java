@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
 
+import isf.ui.R;
 import isf.ui.UIManager;
 
 public class FileManager {
@@ -84,7 +85,7 @@ public class FileManager {
 			out.write(data);
 			out.close();
 		} catch (IOException e) {
-			uim.logWrn("could not write into file '" + targetFile.getAbsolutePath() + "'");
+			uim.logWrn(String.format(R.STR.getString("file_writing_failed"), targetFile.getAbsolutePath()));
 			uim.logException(e, true);
 		}
 	}

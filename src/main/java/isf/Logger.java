@@ -21,7 +21,7 @@ import isf.ui.UIManager;
 public class Logger {
 	
 	private static final UIManager uim = new UIManager("Logger");
-    private static final DecimalFormat DF = new DecimalFormat("##0.00"), DF2 = new DecimalFormat("#00.0");
+    private static final DecimalFormat DF = new DecimalFormat("##0.00"), DF2 = new DecimalFormat("#00.0"), INT = new DecimalFormat("##0");
     private static final int MINUTES_PER_MONTH = 30*24*60;
 
     private static double priceUsd = 0;
@@ -104,12 +104,26 @@ public class Logger {
                 (powPercentage > 95 ? UIManager.ANSI_GREEN : (powPercentage < 75) ? UIManager.ANSI_RED : "")+df2.format(powPercentage)+"%"+UIManager.ANSI_RESET,
                 df2.format(NodeManager.getAvgTxsToApproveTime()),
                 (TipPool.gttarsQueueSize() == 0 ? UIManager.ANSI_RED : "")+TipPool.gttarsQueueSize()+UIManager.ANSI_RESET+"/"+TipPool.gttarsLimit(),
-                buildThreadString());
+                buildThreadString(),
+                buildHeapString());
 
 		uim.logInf(performanceReport);
 	}
 
-	private static String buildThreadString() {
+    public static String buildHeapString() {
+		// Get current size of heap in bytes
+		final long heapSize = Runtime.getRuntime().totalMemory()/1024/1024;
+
+        // Get maximum size of heap in bytes. The heap cannot grow beyond this size.// Any attempt will result in an OutOfMemoryException.
+        final long heapMaxSize = Runtime.getRuntime().maxMemory()/1024/1024;
+
+		// Get amount of free memory within the heap in bytes. This size will increase // after garbage collection and decrease as new objects are created.
+        final long heapFreeSize = Runtime.getRuntime().freeMemory()/1024/1024;
+
+        return INT.format(heapSize) + "MB / " + INT.format(heapMaxSize) + "MB / " + INT.format(heapFreeSize) + "MB";
+	}
+
+	public static String buildThreadString() {
 	    return "M"+Main.SUPER_THREAD.activeCount() + "/P" +
                 PearlDiver.POW_THREAD.activeCount() + "/A" +
                 TimeAbortCall.TIME_ABORT_CALL_THREAD.activeCount() + "/C" +
@@ -137,8 +151,9 @@ public class Logger {
             final String change = (change24h<0?UIManager.ANSI_RED:UIManager.ANSI_GREEN+"+")+df.format(change24h)+"%"+UIManager.ANSI_RESET;
             final String mcap = df.format(obj.getDouble("market_cap_usd")/1e9);
 
-			final String format = UIManager.ANSI_BOLD+"IOTA TICKER:     " + UIManager.ANSI_RESET + "$%1$s/Mi (%2$s in 24h)     %3$s sat/Mi     MCAP: $%4$sB (#%5$d)";
+			final String format = R.STR.getString("log_price_ticker").replace("[b]", UIManager.ANSI_BOLD).replace("[r]", UIManager.ANSI_RESET);
 			final String log = String.format(format, priceUsdString, change, priceSats, mcap, obj.getInt("rank"));
+
             uim.logInf(log);
 
 		} catch (JSONException e) {

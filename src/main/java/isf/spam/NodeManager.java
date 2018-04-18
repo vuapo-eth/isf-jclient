@@ -71,8 +71,10 @@ public class NodeManager {
 		lastSyncCheck = new long[apis.length];
 		inconsistentTipsPairs = new int[apis.length];
 
-		for(int i = 0; i < apis.length; i++)
-			connectToAnyNode(i, null);
+		for(int i = 0; i < apis.length; i++) {
+            available[i] = true;
+            connectToAnyNode(i, null);
+        }
 
 		if(Configs.getBln(P.NODES_THIRD_PARTY_NODE_LIST)) CronJobManager.addCronJob(new CronJob(30*60000, false, false) { @Override public void onCall() { loadNodeList(); } });
 
@@ -110,6 +112,7 @@ public class NodeManager {
 	}
 
 	public static void connectToAnyNode(final int api, final String parNodeSyncedMsg) {
+		if(!available[api]) return;
 		available[api] = false;
 
 		if(parNodeSyncedMsg != null)
@@ -217,19 +220,6 @@ public class NodeManager {
 		return getInclusionStateResponse.getStates();
 	}
 
-	public static String getLatestMilestone() {
-		int api = getAPI();
-		GetNodeInfoResponse getNodeInfoResponse = null;
-		do {
-			if(getNodeInfoResponse != null) {
-				connectToAnyNode(apiIndex, R.STR.getString("nodes_old_milestone"));
-				api = getRotatedAPI();
-			}
-			getNodeInfoResponse = getNodeInfo(api, true);
-		} while(findTractionsByHashes(new String[] {getNodeInfoResponse.getLatestMilestone()}, api).get(0).getTimestamp() < System.currentTimeMillis()/1000-600);
-		return getNodeInfoResponse.getLatestMilestone();
-	}
-
 	public static GetNodeInfoResponse getNodeInfo(final int parApi, boolean tryMultipleTimes) {
 
 		final ObjectWrapper api = new ObjectWrapper(parApi);
@@ -255,16 +245,13 @@ public class NodeManager {
 	}
 
 	public static List<Transaction> findTractionsByHashes(String[] hashes, int api) {
-		List<Transaction> transactions = null;
 
-		while(transactions == null) {
-			try {
-				transactions = apis[api].findTransactionsObjectsByHashes(hashes);
-			} catch (Throwable e) {
-				api = handleThrowableFromIotaAPI(R.STR.getString("nodes_action_find_transactions"), e, api);
-			}
+		try {
+			return apis[api].findTransactionsObjectsByHashes(hashes);
+		} catch (Throwable e) {
+			handleThrowableFromIotaAPI(R.STR.getString("nodes_action_find_transactions"), e, api);
+			return null;
 		}
-		return transactions;
 	}
 
 	public static boolean isAvailable(int api) {
@@ -278,6 +265,7 @@ public class NodeManager {
 
 		long timeStarted = System.currentTimeMillis();
 		while(getTransactionsToApproveResponse == null) {
+            timeStarted = System.currentTimeMillis();
 			try {
 				if(!available[api]) return null;
 				getTransactionsToApproveResponse = apis[api].getTransactionsToApprove(DEPTH);
@@ -329,7 +317,9 @@ public class NodeManager {
 			return String.format(R.STR.getString("nodes_solid_subtangle_behind"),getNodeInfoResponse.getLatestMilestoneIndex()-getNodeInfoResponse.getLatestSolidSubtangleMilestoneIndex());
 
 		String milestone = getNodeInfoResponse.getLatestSolidSubtangleMilestone();
-		long secondsBehind = System.currentTimeMillis()/1000-findTractionsByHashes(new String[] {milestone}, api).get(0).getTimestamp();
+        List<Transaction> milestoneTxList = findTractionsByHashes(new String[] {milestone}, api);
+        if(milestoneTxList == null) return R.STR.getString("nodes_finding_txs_failed");
+		long secondsBehind = System.currentTimeMillis()/1000-milestoneTxList.get(0).getTimestamp();
 		if(secondsBehind > 600)
 			return "lacking "+(secondsBehind/60)+" minutes behind";
 
@@ -344,8 +334,11 @@ public class NodeManager {
 		if(getTransactionsToApproveResponse == null) return "getTransactionsToApproveResponse == null";
 
 		String[] hashes = {getTransactionsToApproveResponse.getBranchTransaction(), getTransactionsToApproveResponse.getTrunkTransaction()};
+
 		List<Transaction> transactions = findTractionsByHashes(hashes, api);
-		if(transactions.size() == 0) return R.STR.getString("nodes_unknown_tips");
+        if(transactions == null) return R.STR.getString("nodes_finding_txs_failed");
+        if(transactions.size() == 0) return R.STR.getString("nodes_unknown_tips");
+
 		long newerTimestamp = Math.max(transactions.get(0).getAttachmentTimestamp(), transactions.get(1).getAttachmentTimestamp());
 		long tipAge = System.currentTimeMillis() /1000-newerTimestamp;
 
@@ -445,7 +438,7 @@ public class NodeManager {
 			apis[api].createSpam();
 			return true;
 		} catch (Throwable e) {
-			handleThrowableFromIotaAPI(R.STR.getString(R.STR.getString("nodes_action_create_spam")), e, api);
+			handleThrowableFromIotaAPI(R.STR.getString("nodes_action_create_spam"), e, api);
 			return false;
 		}
 	}

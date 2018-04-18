@@ -24,7 +24,7 @@ public class TipPool {
 		for(int i = 0; i < NodeManager.getAmountOfAPIs(); i++) {
 			final int api = i;
 			
-			new Thread(TIP_POOL_THREAD_GROUP, "TipPool") {
+			new Thread(TIP_POOL_THREAD_GROUP, "TipPool-"+api) {
 				@Override
 				public void run() {
 					
