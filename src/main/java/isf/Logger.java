@@ -104,23 +104,17 @@ public class Logger {
                 (powPercentage > 95 ? UIManager.ANSI_GREEN : (powPercentage < 75) ? UIManager.ANSI_RED : "")+df2.format(powPercentage)+"%"+UIManager.ANSI_RESET,
                 df2.format(NodeManager.getAvgTxsToApproveTime()),
                 (TipPool.gttarsQueueSize() == 0 ? UIManager.ANSI_RED : "")+TipPool.gttarsQueueSize()+UIManager.ANSI_RESET+"/"+TipPool.gttarsLimit(),
-                buildThreadString(),
+                //buildThreadString(),
                 buildHeapString());
 
 		uim.logInf(performanceReport);
 	}
 
     public static String buildHeapString() {
-		// Get current size of heap in bytes
 		final long heapSize = Runtime.getRuntime().totalMemory()/1024/1024;
-
-        // Get maximum size of heap in bytes. The heap cannot grow beyond this size.// Any attempt will result in an OutOfMemoryException.
-        final long heapMaxSize = Runtime.getRuntime().maxMemory()/1024/1024;
-
-		// Get amount of free memory within the heap in bytes. This size will increase // after garbage collection and decrease as new objects are created.
-        final long heapFreeSize = Runtime.getRuntime().freeMemory()/1024/1024;
-
-        return INT.format(heapSize) + "MB / " + INT.format(heapMaxSize) + "MB / " + INT.format(heapFreeSize) + "MB";
+		final long heapMaxSize = Runtime.getRuntime().maxMemory()/1024/1024;
+		final long heapFreeSize = Runtime.getRuntime().freeMemory()/1024/1024;
+        return INT.format(heapSize) + "/" + INT.format(heapMaxSize) + "/" + INT.format(heapFreeSize) + " MB";
 	}
 
 	public static String buildThreadString() {

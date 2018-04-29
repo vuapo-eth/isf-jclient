@@ -1,11 +1,18 @@
 package isf;
 
 import iota.GOldDiggerLocalPoW;
+import iota.IotaAPI;
 import isf.spam.UploadDataManager;
 import isf.spam.*;
 import isf.ui.R;
 import isf.ui.UIManager;
 import isf.ui.UIQuestion;
+import jota.dto.response.GetTransactionsToApproveResponse;
+import jota.model.Transaction;
+
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.util.List;
 
 public class Main {
 
@@ -17,6 +24,11 @@ public class Main {
 	public static final ThreadGroup SUPER_THREAD = new ThreadGroup( "Super-Thread" );
 
 	public static void main(String[] args) {
+
+		try {
+			System.setOut(new PrintStream(System.out, true, "UTF-8"));
+			System.setErr(new PrintStream(System.err, true, "UTF-8"));
+		} catch (UnsupportedEncodingException e) { }
 
 		testnetMode = findParameterIndex("-testnet", args) != -1;
 		onlineMode = !testnetMode && findParameterIndex("-offline", args) == -1;
@@ -57,11 +69,14 @@ public class Main {
     		public void run() {
                 UIM.logDbg(R.STR.getString("main_terminate"));
                 GOldDiggerLocalPoW.shutDown();
+
     			do {
     			    int amountQueued = TxBroadcaster.getAmountQueued();
     			    if(amountQueued == 0) break;
                     UIM.logDbg(String.format(R.STR.getString("main_terminate_broadcast"), amountQueued));
-                    try { sleep(5000); } catch(InterruptedException e) {} // TODO object.wait(...)
+                    try { synchronized (SUPER_THREAD) {
+                        SUPER_THREAD.wait(5000);
+                    } } catch(InterruptedException e) {}
                 } while (true);
                 AddressManager.updateTails();
     		}

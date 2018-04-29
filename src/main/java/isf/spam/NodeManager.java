@@ -27,7 +27,7 @@ public class NodeManager {
             DO_SYNC_CHECK_THREAD_GROUP = new ThreadGroup("DoSyncCheckThread");
 
 	private static final UIManager uim = new UIManager("NodeMngr");
-	private static int DEPTH = 1;
+	private static int DEPTH = 4;
 
 	private static final int INCONSISTENT_TIPS_PAIR_TOLERANCE = 20, TIP_AGE_TOLERANCE = 180, CONNECTING_DURATION_TOLERACE = 6, NODEINFO_DURATION_TOLERANCE = 6;
 	private static final Pattern VALID_NODE_ADDRESS_REGEX = Pattern.compile("^(http|https)(://)[A-Z0-9.-]*(:)[0-9]{1,5}$", Pattern.CASE_INSENSITIVE);
@@ -45,6 +45,7 @@ public class NodeManager {
 
 	private static int apiIndex = 0;
 	private static int availableAPIs = 0;
+	private static long lastTimeNoApiWasAvailable = 0;
 
 	public static int getAmountOfAvailableAPIs() {
 		return availableAPIs;
@@ -63,6 +64,8 @@ public class NodeManager {
 	}
 
 	public static void init() {
+		DEPTH = Configs.getInt(P.SPAM_DEPTH);
+
 		loadNodeList();
 		shuffleNodeList();
 
@@ -76,9 +79,10 @@ public class NodeManager {
             connectToAnyNode(i, null);
         }
 
-		if(Configs.getBln(P.NODES_THIRD_PARTY_NODE_LIST)) CronJobManager.addCronJob(new CronJob(30*60000, false, false) { @Override public void onCall() { loadNodeList(); } });
-
-		DEPTH = Configs.getInt(P.SPAM_DEPTH);
+		if(Configs.getBln(P.NODES_THIRD_PARTY_NODE_LIST)) {
+		    long nodeListReloadInterval = Configs.getInt(P.NODES_THIRD_PARTY_NODE_LIST_RELOAD_INTERVAL)*1000;
+		    CronJobManager.addCronJob(new CronJob(nodeListReloadInterval, false, false) { @Override public void onCall() { loadNodeList(); } });
+        }
 	}
 
 	private static boolean connectToNode(final String node, final int api) {
@@ -184,7 +188,10 @@ public class NodeManager {
 		do {
 			apiIndex = (apiIndex+1)%apis.length;
 			if(tries++ > apis.length) {
-				uim.logWrn(R.STR.getString("nodes_unavailable"));
+				if(lastTimeNoApiWasAvailable < System.currentTimeMillis() - 15000) {
+                    lastTimeNoApiWasAvailable = System.currentTimeMillis();
+                    uim.logWrn(R.STR.getString("nodes_unavailable"));
+                }
 				sleep(5000);
 			}
 		} while(!available[apiIndex]);
@@ -339,10 +346,10 @@ public class NodeManager {
         if(transactions == null) return R.STR.getString("nodes_finding_txs_failed");
         if(transactions.size() == 0) return R.STR.getString("nodes_unknown_tips");
 
-		long newerTimestamp = Math.max(transactions.get(0).getAttachmentTimestamp(), transactions.get(1).getAttachmentTimestamp());
+		long newerTimestamp = Math.max(transactions.get(0).getTimestamp(), transactions.get(1).getTimestamp());
 		long tipAge = System.currentTimeMillis() /1000-newerTimestamp;
 
-		lastSyncCheck[api] = System.currentTimeMillis();
+		lastSyncCheck[api] = System.currentTimeMillis()/1000;
 		return tipAge > TIP_AGE_TOLERANCE ? String.format(R.STR.getString("nodes_old_tips"), tipAge, TIP_AGE_TOLERANCE) : null;
 	}
 
@@ -475,11 +482,11 @@ public class NodeManager {
 	    if(testnet) {
             return "# " + String.format(R.STR.getString("nodes_file_header_testnet"),
                     R.URL.getString("node_format"),
-                    R.URL.getString("node_example_testnet")) + "\n\n";
+                    R.URL.getString("node_example_testnet")) + "\r\n\r\n";
         }
         return "# " + String.format(R.STR.getString("nodes_file_header"),
                 R.URL.getString("node_format"),
                 R.URL.getString("node_example_1"),
-                R.URL.getString("node_example_2")) + "\n\n";
+                R.URL.getString("node_example_2")) + "\r\n\r\n";
     }
 }

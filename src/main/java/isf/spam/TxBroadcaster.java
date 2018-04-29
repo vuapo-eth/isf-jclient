@@ -32,6 +32,11 @@ public class TxBroadcaster {
 				while(!broadcastBomb.call(10));
 				AddressManager.incrementSessionTxCount();
                 amountQueued--;
+
+                if(amountQueued <= 0)
+                    synchronized (Main.SUPER_THREAD) {
+                        Main.SUPER_THREAD.notify();
+                    }
 			}
 		}.start();
 	}

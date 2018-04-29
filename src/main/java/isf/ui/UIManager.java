@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Scanner;
 
+import isf.logic.CronJob;
+import isf.logic.CronJobManager;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -53,6 +55,8 @@ public class UIManager {
 		System.setOut(DUMMY_STREAM);
 		setSystemErrorEnabled(true);
 		toggleColors(true);
+
+        CronJobManager.addCronJob(new CronJob(60000, false, false) { @Override public void onCall() { saveLogs(); }});
 	}
 	
 	public void print(String line) {
@@ -62,27 +66,25 @@ public class UIManager {
 		
 		ORIGINAL_STREAM.println(line+ANSI_RESET);
 		logs.add(line+ANSI_RESET);
-		saveLogs();
 	}
 	
 	public static void saveLogs() {
-		
-		if(lastLogSaved < System.currentTimeMillis()-60000) {
-			lastLogSaved = System.currentTimeMillis();
-			String logString = "";
-			for(int i = 0; i < logs.size(); i++) logString += logs.get(i) + "\n";
-			
-			if(!FileManager.exists("logs")) FileManager.mkdirs("logs");
-			
-			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
-			
-			FileManager.write("logs/"+sdf.format(logFileID)+".txt", logString);
-			
-			if(logs.size() > 1000) {
-				logFileID = System.currentTimeMillis();
-				logs = new ArrayList<String>();
-			}
-		}
+
+        lastLogSaved = System.currentTimeMillis();
+        String logString = "";
+        for(int i = 0; i < logs.size(); i++) logString += logs.get(i) + "\r\n";
+        logString = logString.replaceAll("\\e\\[[\\d;]*[^\\d;]",""); // remove ansi https://stackoverflow.com/a/25189932
+
+        if(!FileManager.exists("logs")) FileManager.mkdirs("logs");
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+
+        FileManager.write("logs/"+sdf.format(logFileID)+".txt", logString);
+
+        if(logs.size() > 1000) {
+            logFileID = System.currentTimeMillis();
+            logs = new ArrayList<String>();
+        }
 	}
 	
 	public void logPln(String msg) {

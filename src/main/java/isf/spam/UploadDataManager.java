@@ -26,8 +26,8 @@ public class UploadDataManager {
                 while(true) {
                     if(wikipediaArticles.size() < 10) {
                         try {
-                            String am = randomWikipediaArticle();
-                            if(am != null) wikipediaArticles.add(am);
+                            final String randomWikipediaArticle = randomWikipediaArticle();
+                            if(randomWikipediaArticle != null) wikipediaArticles.add(randomWikipediaArticle);
                         } catch (Throwable t) {
                             UIM.logException(t, false);
                         }
@@ -44,7 +44,7 @@ public class UploadDataManager {
     }
 	
 	public static String getNextData() {
-        String wikipediaArticle = wikipediaArticles.poll();
+        final String wikipediaArticle = wikipediaArticles.poll();
         String nextData = transactionMessageTrytes +(wikipediaArticle == null ? "": wikipediaArticle);
         nextData = nextData.substring(0, Math.min(nextData.length(), 2186));
 		return nextData;
@@ -52,12 +52,14 @@ public class UploadDataManager {
 
     public static String randomWikipediaArticle() {
 
-        String jsonStr = APIManager.request(String.format(R.URL.getString("wikipedia_random"),(2186-transactionMessageTrytes.length())/2-120), null);
-        JSONObject pages = new JSONObject(jsonStr).getJSONObject("query").getJSONObject("pages");
-        JSONObject page = pages.getJSONObject(pages.keys().next());
+        final String jsonStr = APIManager.request(String.format(R.URL.getString("wikipedia_random"),(2186-transactionMessageTrytes.length())/2-120), null);
+        final JSONObject pages = new JSONObject(jsonStr).getJSONObject("query").getJSONObject("pages");
+        final JSONObject page = pages.getJSONObject(pages.keys().next());
 
-        String title = page.getString("title").toUpperCase();
-        String excerpt = page.getString("extract");
-        return TrytesConverter.toTrytes("\n\n'" + title + "'\n\n" + excerpt.replace("–", "-"));
+        final String title = page.getString("title").toUpperCase();
+        final String excerpt = page.getString("extract");
+        final String trytes = TrytesConverter.toTrytes("\n\n'" + title + "'\n\n" + excerpt.replace("–", "-"));
+
+        return trytes;
     }
 }

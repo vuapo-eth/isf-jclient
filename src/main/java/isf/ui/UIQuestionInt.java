@@ -12,7 +12,9 @@ public class UIQuestionInt extends UIQuestion {
 	public static final UIQuestionInt Q_LOG_INTERVAL = new UIQuestionInt(1, 3600, true).setQuestion(R.STR.getString("config_question_log_interval")).setRecommended(60);
 	public static final UIQuestionInt Q_LOG_PERFORMANCE_REPORT_INTERVAL = new UIQuestionInt(1, 3600, true).setQuestion(R.STR.getString("config_question_performance_report")).setRecommended(180);
 	public static final UIQuestionInt Q_NODES_AMOUNT_ROTATION = new UIQuestionInt(1, -1, true).setQuestion(R.STR.getString("config_question_node_rotation")).setRecommended(20);
-	
+	public static final UIQuestionInt Q_NODES_THIRD_PARTY_NODE_LIST_RELOAD_INTERVAL = new UIQuestionInt(900, -1, true).setQuestion(R.STR.getString("config_question_third_party_node_list_reload_interval")).setRecommended(1800);
+
+
 	private int min, max, recommended;
 	private final boolean includeRangeInQuestion;
 	

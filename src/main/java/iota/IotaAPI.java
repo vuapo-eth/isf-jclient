@@ -9,10 +9,12 @@ import isf.spam.TxBroadcaster;
 import isf.spam.NodeManager;
 import isf.spam.SpamThread;
 import isf.spam.UploadDataManager;
+import isf.ui.UIManager;
 import jota.dto.response.GetAttachToTangleResponse;
 import jota.dto.response.GetTransactionsToApproveResponse;
 import jota.error.ArgumentException;
 import jota.model.Input;
+import jota.model.Transaction;
 import jota.model.Transfer;
 import jota.pow.ICurl;
 
@@ -33,9 +35,13 @@ public class IotaAPI extends jota.IotaAPI {
         
         List<String> trytes = prepareTransfers("", SECURITY, transfers, null, inputs, false);
 
-        GetTransactionsToApproveResponse txs = TipPool.getTransactionsToApprove();
-		while(txs == null) txs = NodeManager.getTransactionsToApprove(NodeManager.getRotatedAPI());
-        final GetAttachToTangleResponse res = attachToTangle(txs.getTrunkTransaction(), txs.getBranchTransaction(), MIN_WEIGHT_MAGNITUDE, trytes.toArray(new String[trytes.size()]));
+        String[] tips = TipPool.getTransactionsToApprove();
+		while(tips == null) {
+		    GetTransactionsToApproveResponse gttar = NodeManager.getTransactionsToApprove(NodeManager.getRotatedAPI());
+		    tips = new String[]{gttar.getTrunkTransaction(), gttar.getBranchTransaction()};
+        }
+
+        final GetAttachToTangleResponse res = attachToTangle(tips[0], tips[1], MIN_WEIGHT_MAGNITUDE, trytes.toArray(new String[trytes.size()]));
         TxBroadcaster.queueTrytes(res);
 	}
 	

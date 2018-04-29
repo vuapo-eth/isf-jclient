@@ -1,23 +1,28 @@
 package isf.spam;
 
 import java.util.EmptyStackException;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Stack;
 
 import isf.Main;
 import isf.logic.ObjectWrapper;
 import isf.logic.TimeAbortCall;
 import isf.ui.R;
+import isf.ui.UIManager;
 import jota.dto.response.GetTransactionsToApproveResponse;
 
 public class TipPool {
 
 	public static final ThreadGroup TIP_POOL_THREAD_GROUP = new ThreadGroup("TipPoolThread");
+    private static final UIManager UIM = new UIManager("TipPool");
 
-	private static Stack<GetTransactionsToApproveResponse> gttars = new Stack<GetTransactionsToApproveResponse>();
+	private static Stack<String[]> gttars = new Stack<String[]>();
 	private static int gttarsLimit = 5;
-	
-	static final ObjectWrapper REQUESTED_TIPS = new ObjectWrapper(0);
-	static final ObjectWrapper REQUIRED_TIPS = new ObjectWrapper(gttarsLimit);
+	private static long lastTimeEmpty = 0;
+
+    private static final ObjectWrapper REQUESTED_TIPS = new ObjectWrapper(0);
+    private static final ObjectWrapper REQUIRED_TIPS = new ObjectWrapper(gttarsLimit);
 	
 	public static void init() {
 			
@@ -31,10 +36,12 @@ public class TipPool {
 					TimeAbortCall tb = new TimeAbortCall(R.STR.getString("action_request_tips"), 10) {
 						@Override
 						public boolean onCall() {
-							GetTransactionsToApproveResponse gttar = NodeManager.getTransactionsToApprove(api);
+                            final GetTransactionsToApproveResponse gttar = NodeManager.getTransactionsToApprove(api);
 							if(gttar != null) {
-								gttars.push(gttar);
-								REQUIRED_TIPS.o = gttarsLimit-gttars.size();
+                                final String[] gttarString = {gttar.getBranchTransaction(), gttar.getTrunkTransaction()};
+                                gttars.push(gttarString);
+
+                                REQUIRED_TIPS.o = gttarsLimit-gttars.size();
 							}
 							return gttar != null;
 						}
@@ -62,13 +69,19 @@ public class TipPool {
 		}
 	}
 	
-	public static GetTransactionsToApproveResponse getTransactionsToApprove() {
+	public static String[] getTransactionsToApprove() {
 		gttarsLimit = Math.max((int)Math.ceil(SpamThread.getSpamSpeed()/5), 5);
 		REQUIRED_TIPS.o = gttarsLimit-gttars.size();
 		if((int)REQUIRED_TIPS.o > (int)REQUESTED_TIPS.o) synchronized (REQUIRED_TIPS) { REQUIRED_TIPS.notifyAll(); }
 		try {
 			return gttars.pop();
 		} catch(EmptyStackException e) {
+		    if(lastTimeEmpty < System.currentTimeMillis() - 60000) {
+                if(lastTimeEmpty > 0)
+                    UIM.logWrn(R.STR.getString("tip_pool_empty"));
+                lastTimeEmpty = System.currentTimeMillis();
+            }
+
 			return null;
 		}
 	}

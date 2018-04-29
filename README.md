@@ -9,7 +9,7 @@ If you have never heard about Maven, you should stick with this rather simple "i
 
 1. download the .jar file from the [releases page](https://github.com/mikrohash/isf-jclient/releases) and put it somewhere where it has write access (e.g. into `Desktop/isf-jclient/`)
 
-2. if you haven't already, now is the time to install the JRE (Java Runtime Environment) or JDK (Java Development Kit, which includes the JRE) so you can execute the .jar file in the next step
+2. if you haven't already, now is the time to install the [JRE](http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html) (Java Runtime Environment) or [JDK](http://www.oracle.com/technetwork/java/javase/downloads/jdk10-downloads-4416644.html) (Java Development Kit, which includes the JRE) so you can execute the .jar file in the next step
 
 3. open your console, `cd` yourself into the jar's directory and simply start it: `java -jar isf-jclient-[VERSION].jar `
 

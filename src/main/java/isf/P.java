@@ -78,6 +78,7 @@ public enum P {
 
 	NODES_AMOUNT_ROTATION(UIQuestionInt.Q_NODES_AMOUNT_ROTATION),
 	NODES_THIRD_PARTY_NODE_LIST(true, R.STR.getString("config_question_third_party_node_list")),
+    NODES_THIRD_PARTY_NODE_LIST_RELOAD_INTERVAL(UIQuestionInt.Q_NODES_THIRD_PARTY_NODE_LIST_RELOAD_INTERVAL),
 	NODES_SYNC_CHECK_INTERVAL(UIQuestionInt.Q_NODE_SYNC_CHECK_INTERVAL);
 
     private static final UIManager UIM = new UIManager("Prprts");
