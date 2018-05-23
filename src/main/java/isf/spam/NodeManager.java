@@ -458,35 +458,40 @@ public class NodeManager {
 		uim.logDbg(R.STR.getString("nodes_download_remote"));
 
 		if(!FileManager.exists(nodeListFileName))
-		    FileManager.write(nodeListFileName, buildNodesFileHeader(Main.isInTestnetMode()));
+		    FileManager.write(nodeListFileName, buildNodesFileHeader(Main.getNetSuffix()));
 
         String nodelist = FileManager.read(nodeListFileName);
 		addToNodeList(newNodeList, nodelist.replace(" ", ""));
-		if(Configs.getBln(P.NODES_THIRD_PARTY_NODE_LIST) || Main.isInTestnetMode()) NodeManager.importRemoteNodeList(newNodeList);
+		if(Configs.getBln(P.NODES_THIRD_PARTY_NODE_LIST)) NodeManager.importRemoteNodeList(newNodeList);
 		nodeList = newNodeList;
 		
 		shuffleNodeList();
 		if(nodeList.size() > 0)
             uim.logDbg(String.format(R.STR.getString("nodes_node_list_size"), nodeList.size()));
         else {
-            uim.logErr(R.STR.getString("nodes_node_list_empty"));
+            uim.logErr(String.format(R.STR.getString("nodes_node_list_empty"), buildNodeListFileName()));
             System.exit(0);
         }
 	}
 
 	public static String buildNodeListFileName() {
-	    return Main.isInTestnetMode() ? "nodelist_testnet.cfg" : "nodelist.cfg";
+	    return "nodelist" + Main.getNetSuffix() + ".cfg";
     }
 
-    public static String buildNodesFileHeader(boolean testnet) {
-	    if(testnet) {
-            return "# " + String.format(R.STR.getString("nodes_file_header_testnet"),
-                    R.URL.getString("node_format"),
-                    R.URL.getString("node_example_testnet")) + "\r\n\r\n";
-        }
-        return "# " + String.format(R.STR.getString("nodes_file_header"),
-                R.URL.getString("node_format"),
-                R.URL.getString("node_example_1"),
-                R.URL.getString("node_example_2")) + "\r\n\r\n";
-    }
+	public static String buildNodesFileHeader(String net) {
+		if(net.equals("_spamnet")) {
+			return "# " + String.format(R.STR.getString("nodes_file_header_spamnet"),
+					R.URL.getString("node_format"),
+					R.URL.getString("node_example_spamnet")) + "\r\n\r\n";
+		}
+		if(net.equals("_testnet")) {
+			return "# " + String.format(R.STR.getString("nodes_file_header_testnet"),
+					R.URL.getString("node_format"),
+					R.URL.getString("node_example_testnet")) + "\r\n\r\n";
+		}
+		return "# " + String.format(R.STR.getString("nodes_file_header"),
+				R.URL.getString("node_format"),
+				R.URL.getString("node_example_1"),
+				R.URL.getString("node_example_2")) + "\r\n\r\n";
+	}
 }

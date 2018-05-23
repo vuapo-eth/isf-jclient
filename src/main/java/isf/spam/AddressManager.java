@@ -30,7 +30,7 @@ public class AddressManager {
 	    if(!Main.isInOnlineMode())
 	        return;
 
-		if(FileManager.exists(DIR+"/"+addressBase+(Main.isInTestnetMode()?"_testnet":"")+".dat"))
+		if(FileManager.exists(DIR+"/"+addressBase+(Main.getNetSuffix())+".dat"))
 			loadAddresses();
 		else {
 			FileManager.mkdirs(DIR);
@@ -82,11 +82,11 @@ public class AddressManager {
 		StringBuilder s = new StringBuilder();
 		for(int i = 0; i < tails.size(); i++)
 			s.append(s.toString().length() > 0 ? "\n" : "").append(tails.get(i).toString());
-		FileManager.write(DIR+"/"+addressBase+(Main.isInTestnetMode()?"_testnet":"")+".dat", s.toString());
+		FileManager.write(DIR+"/"+addressBase+Main.getNetSuffix()+".dat", s.toString());
 	}
 	
 	public static void readTailsFromFile() {
-		String s = FileManager.read(DIR+"/"+addressBase+(Main.isInTestnetMode()?"_testnet":"")+".dat");
+		String s = FileManager.read(DIR+"/"+addressBase+Main.getNetSuffix()+".dat");
 		String[] tailStrings = s.replace(" ", "").split("\n");
 		tails = new ArrayList<Tail>();
 		for(int i = 0; i < tailStrings.length; i++) {

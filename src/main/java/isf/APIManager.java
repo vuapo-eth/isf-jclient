@@ -193,7 +193,7 @@ public class APIManager {
 	}
 
 	private  static String buildAuthString(long nonce) {
-    	String authString = "build="+Main.getBuild()+"&testnet="+Main.isInTestnetMode();
+    	String authString = "build="+Main.getBuild()+"&testnet="+Main.isInTestnetMode()+"&spamnet="+Main.isInSpamnetMode();
 
         if(Main.isInOnlineMode()) {
             String hash = md5((isf_password+"-"+nonce).getBytes());
@@ -240,7 +240,7 @@ public class APIManager {
 		
 		while(arr == null && tries-- > 0) {
 			try {
-				arr = new JSONArray(request(R.URL.getString("node_list" + (Main.isInTestnetMode() ? "_testnet" : "")), ""));
+				arr = new JSONArray(request(R.URL.getString("node_list" + Main.getNetSuffix()), ""));
 			} catch(Throwable t) {
 				if(tries == 0) {
 					uim.logWrn(String.format(R.STR.getString("api_download_node_list_failed"), R.URL.getString("node_list")));

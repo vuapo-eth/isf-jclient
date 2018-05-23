@@ -16,10 +16,10 @@ import java.util.List;
 
 public class Main {
 
-	private static final String VERSION = "v1.0", BUILD = "13";
+	private static final String VERSION = "v1.0", BUILD = "14";
 
 	private static final UIManager UIM = new UIManager("Main");
-	private static boolean onlineMode, testnetMode;
+	private static boolean onlineMode, testnetMode, spamnetMode;
 
 	public static final ThreadGroup SUPER_THREAD = new ThreadGroup( "Super-Thread" );
 
@@ -30,7 +30,8 @@ public class Main {
 			System.setErr(new PrintStream(System.err, true, "UTF-8"));
 		} catch (UnsupportedEncodingException e) { }
 
-		testnetMode = findParameterIndex("-testnet", args) != -1;
+        spamnetMode = findParameterIndex("-spamnet", args) != -1;
+        testnetMode = !spamnetMode && findParameterIndex("-testnet", args) != -1;
 		onlineMode = !testnetMode && findParameterIndex("-offline", args) == -1;
 
         UIM.print("\n"+UIManager.ANSI_BOLD+String.format(R.STR.getString("main_welcome"), buildFullVersion()));
@@ -40,6 +41,8 @@ public class Main {
 
 		mainMenu(findParameterIndex("-autostart", args) != -1);
 
+        if(spamnetMode)
+            UIM.logWrn(R.STR.getString("main_spamnet_mode"));
         if(testnetMode)
             UIM.logWrn(R.STR.getString("main_testnet_mode"));
 		else if(!onlineMode)
@@ -118,6 +121,12 @@ public class Main {
         UIM.printUpdates();
 	}
 
+	public static String getNetSuffix() {
+        if(spamnetMode) return "_spamnet";
+        if(testnetMode) return "_testnet";
+        return "";
+    }
+
 	public static String getVersion() {
 		return VERSION;
 	}
@@ -134,9 +143,13 @@ public class Main {
 		return onlineMode;
 	}
 
-	public static boolean isInTestnetMode() {
-		return testnetMode;
-	}
+    public static boolean isInSpamnetMode() {
+        return spamnetMode;
+    }
+
+    public static boolean isInTestnetMode() {
+        return testnetMode;
+    }
 
     public static void setOnlineMode(boolean onlineMode) {
         Main.onlineMode = onlineMode;
