@@ -16,7 +16,7 @@ import java.util.List;
 
 public class Main {
 
-	private static final String VERSION = "v1.0", BUILD = "14";
+	private static final String VERSION = "v1.0", BUILD = "15";
 
 	private static final UIManager UIM = new UIManager("Main");
 	private static boolean onlineMode, testnetMode, spamnetMode;
