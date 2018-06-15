@@ -109,7 +109,7 @@ public class NodeManager {
 
 		if(!t.call(CONNECTING_DURATION_TOLERACE)) return false;
 
-		String isNodeSynced = isNodeSynced(api);
+		String isNodeSynced = isNodeSynced(api, true);
 		if(isNodeSynced != null)
 			uim.logDbg(String.format(R.STR.getString("nodes_action_changing"), buildNodeAddress(api), api, isNodeSynced));
 		return isNodeSynced == null;
@@ -227,7 +227,7 @@ public class NodeManager {
 		return getInclusionStateResponse.getStates();
 	}
 
-	public static GetNodeInfoResponse getNodeInfo(final int parApi, boolean tryMultipleTimes) {
+	public static GetNodeInfoResponse getNodeInfo(final int parApi, final boolean tryingToCreateConnection, int amountOfTries) {
 
 		final ObjectWrapper api = new ObjectWrapper(parApi);
 		final ObjectWrapper res = new ObjectWrapper(null);
@@ -241,13 +241,13 @@ public class NodeManager {
 					res.o = apis[(int)api.o].getNodeInfo();
 					return true;
 				} catch (Throwable e) {
-					api.o = handleThrowableFromIotaAPI(action, e, (int)api.o);
+					if(!tryingToCreateConnection) api.o = handleThrowableFromIotaAPI(action, e, (int)api.o);
 					return false;
 				}
 			}
 		};
 
-		do { tb.call(NODEINFO_DURATION_TOLERANCE); } while(tryMultipleTimes);
+		do { tb.call(NODEINFO_DURATION_TOLERANCE); } while(res.o == null && amountOfTries-- > 0);
 		return (GetNodeInfoResponse) res.o;
 	}
 
@@ -308,11 +308,11 @@ public class NodeManager {
 		return getRotatedAPI();
 	}
 
-	private static String isNodeSynced(int api) {
+	private static String isNodeSynced(int api, boolean tryingToCreateConnection) {
 
 		GetNodeInfoResponse getNodeInfoResponse = null;
 		try {
-			getNodeInfoResponse = getNodeInfo(api, false);
+			getNodeInfoResponse = getNodeInfo(api, tryingToCreateConnection, 3);
 		} catch (Throwable e) {
 			return e.getClass().getName() + ": " + e.getMessage();
 		}
@@ -399,7 +399,7 @@ public class NodeManager {
 		new Thread(DO_SYNC_CHECK_THREAD_GROUP,"doSyncCheck("+api+")") {
 			@Override
 			public void run() {
-				String error = isNodeSynced(api);
+				String error = isNodeSynced(api, false);
 				if(error != null) connectToAnyNode(api, error);
 			}
 		}.start();

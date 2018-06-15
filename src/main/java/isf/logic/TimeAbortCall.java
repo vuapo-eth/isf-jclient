@@ -6,7 +6,7 @@ import isf.ui.UIManager;
 
 public abstract class TimeAbortCall {
 	private static final UIManager UIM = new UIManager("TimeAbrt");
-	public static final ThreadGroup TIME_ABORT_CALL_THREAD = new ThreadGroup("TimeAbortCallThread");
+    public static final ThreadGroup TIME_ABORT_CALL_THREAD = new ThreadGroup("TimeAbortCallThread");
 
 	private final String actionName;
 	private final int tolerance;
@@ -32,7 +32,7 @@ public abstract class TimeAbortCall {
 				success.o = true;
 				synchronized (res) { res.notify(); }
 			}
-		};
+        };
 
 		while(true) {
             try {
@@ -50,6 +50,7 @@ public abstract class TimeAbortCall {
 		try {
 			synchronized (res) { res.wait(timeLimitSeconds*1000); }
 		} catch (InterruptedException e) {
+			t.interrupt();
 			UIM.logException(e, true);
 		}
 		if(!(boolean)success.o) {
