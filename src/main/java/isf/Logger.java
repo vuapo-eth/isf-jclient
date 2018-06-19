@@ -80,7 +80,7 @@ public class Logger {
         String log = String.format(R.STR.getString("log" + (Main.isInOnlineMode() ? "" : "_offline")), logTime, logSpam, logSpeed, logConfirmed, logBalance, logRewardPerMonth, logNodes);
 
 		uim.logInf(log);
-		uim.logInf(buildThreadString());
+		//uim.logInf(buildThreadString());
 	}
 
     private static String formatInterval(final long interval) {
