@@ -5,19 +5,26 @@ import isf.ui.R;
 import isf.ui.UIManager;
 
 public abstract class TimeAbortCall {
-	private static final UIManager UIM = new UIManager("TimeAbrt");
+    private static final UIManager UIM = new UIManager("TimeAbrt");
     public static final ThreadGroup TIME_ABORT_CALL_THREAD = new ThreadGroup("TimeAbortCallThread");
+    public static final ThreadGroup TA_NODE_CONNECT = new ThreadGroup("TA_NODE_CONNECT");
+    public static final ThreadGroup NODE_INFO = new ThreadGroup("NODE_INFO");
+    public static final ThreadGroup TIPS = new ThreadGroup("TIPS");
+    public static final ThreadGroup TA_SPAM = new ThreadGroup("TA_SPAM");
+    public static final ThreadGroup TA_BROADCAST = new ThreadGroup("TA_BROADCAST");
 
 	private final String actionName;
 	private final int tolerance;
 
     private static long threadIdCounter = 0;
+    private ThreadGroup tg = null;
 
 	private int fails;
 	
-	public TimeAbortCall(String actionName, int tolerance) {
+	public TimeAbortCall(String actionName, int tolerance, ThreadGroup tg) {
 		this.actionName = actionName;
 		this.tolerance = tolerance;
+		this.tg = tg;
 	}
 	
 	public boolean call(int timeLimitSeconds) {
@@ -25,7 +32,7 @@ public abstract class TimeAbortCall {
 		final ObjectWrapper res = new ObjectWrapper(false);
 		final ObjectWrapper success = new ObjectWrapper(false);
 
-		Thread t = new Thread(TIME_ABORT_CALL_THREAD, "TimeAbortCall-"+(threadIdCounter++)) {
+		Thread t = new Thread(tg, "TimeAbortCall-"+(threadIdCounter++)) {
 			@Override
 			public void run() {
 				res.o = onCall();

@@ -80,6 +80,7 @@ public class Logger {
         String log = String.format(R.STR.getString("log" + (Main.isInOnlineMode() ? "" : "_offline")), logTime, logSpam, logSpeed, logConfirmed, logBalance, logRewardPerMonth, logNodes);
 
 		uim.logInf(log);
+		uim.logInf(buildThreadString());
 	}
 
     private static String formatInterval(final long interval) {
@@ -118,14 +119,19 @@ public class Logger {
 	}
 
 	public static String buildThreadString() {
-	    return "M"+Main.SUPER_THREAD.activeCount() + "/P" +
+	    /*return "M"+Main.SUPER_THREAD.activeCount() + "/P" +
                 PearlDiver.POW_THREAD.activeCount() + "/A" +
                 TimeAbortCall.TIME_ABORT_CALL_THREAD.activeCount() + "/C" +
                 CronJob.CRONJOB_THREAD.activeCount() + "/T" +
                 TipPool.TIP_POOL_THREAD_GROUP.activeCount() + "/N" +
                 NodeManager.CONNECT_TO_ANY_NODE_THREAD_GROUP.activeCount() + "/S" +
-                NodeManager.DO_SYNC_CHECK_THREAD_GROUP.activeCount();
-    }
+                NodeManager.DO_SYNC_CHECK_THREAD_GROUP.activeCount();*/
+	    return "A" + TimeAbortCall.NODE_INFO.activeCount() + "/B" +
+				TimeAbortCall.TA_BROADCAST.activeCount() + "/C" +
+				TimeAbortCall.TA_SPAM.activeCount() + "/D" +
+				TimeAbortCall.TIPS.activeCount() + "/E" +
+				TimeAbortCall.TIME_ABORT_CALL_THREAD.activeCount();
+	}
 
 	private static void updateIotaTicker() {
 		DecimalFormat df = new DecimalFormat("###,##0.00"), dfInt = new DecimalFormat("###,##0");

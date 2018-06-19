@@ -1,11 +1,8 @@
 package isf.spam;
 
 import java.util.EmptyStackException;
-import java.util.LinkedList;
-import java.util.Queue;
 import java.util.Stack;
 
-import isf.Main;
 import isf.logic.ObjectWrapper;
 import isf.logic.TimeAbortCall;
 import isf.ui.R;
@@ -33,7 +30,7 @@ public class TipPool {
 				@Override
 				public void run() {
 					
-					TimeAbortCall tb = new TimeAbortCall(R.STR.getString("action_request_tips"), 10) {
+					TimeAbortCall tb = new TimeAbortCall(R.STR.getString("action_request_tips"), 10, TimeAbortCall.TIPS) {
 						@Override
 						public boolean onCall() {
                             final GetTransactionsToApproveResponse gttar = NodeManager.getTransactionsToApprove(api);

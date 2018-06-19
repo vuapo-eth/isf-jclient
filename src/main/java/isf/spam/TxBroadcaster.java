@@ -13,7 +13,7 @@ public class TxBroadcaster {
 		
 		if(res.getTrytes()[0] == null) return;
 		
-		final TimeAbortCall broadcastBomb = new TimeAbortCall(R.STR.getString("action_broadcast"), 10) {
+		final TimeAbortCall broadcastBomb = new TimeAbortCall(R.STR.getString("action_broadcast"), 10, TimeAbortCall.TA_BROADCAST) {
 			@Override
 			public boolean onCall() {
 				try {

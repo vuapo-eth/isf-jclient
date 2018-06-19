@@ -87,7 +87,7 @@ public class NodeManager {
 
 	private static boolean connectToNode(final String node, final int api) {
 
-		TimeAbortCall t = new TimeAbortCall(R.STR.getString("nodes_action_connecting"), 1) {
+		TimeAbortCall t = new TimeAbortCall(R.STR.getString("nodes_action_connecting"), 1, TimeAbortCall.TA_NODE_CONNECT) {
 
 			@Override
 			public boolean onCall() {
@@ -234,7 +234,7 @@ public class NodeManager {
 
 		final String action = R.STR.getString("nodes_action_node_info");
 
-		TimeAbortCall tb = new TimeAbortCall(action, 0) {
+		TimeAbortCall tb = new TimeAbortCall(action, 0, TimeAbortCall.NODE_INFO) {
 			@Override
 			public boolean onCall() {
 				try {
@@ -430,8 +430,8 @@ public class NodeManager {
 			try {
 				storeTransactionsResponse = apis[api].broadcastAndStore(trytes);
 			} catch (Throwable e) {
-				if(e.getMessage().contains("thread interrupted"))
-					throw(new InterruptedException());
+				if(InterruptedException.class.isAssignableFrom(e.getClass())) return;
+				if(e.getMessage().contains("thread interrupted")) throw(new InterruptedException()); // gonna let this stay here for now, just in case ... will probably forget later
 				api = handleThrowableFromIotaAPI(R.STR.getString("action_broadcast"), e, api);
 			}
 		}
@@ -445,6 +445,7 @@ public class NodeManager {
 			apis[api].createSpam();
 			return true;
 		} catch (Throwable e) {
+			if(InterruptedException.class.isAssignableFrom(e.getClass())) return false;
 			handleThrowableFromIotaAPI(R.STR.getString("nodes_action_create_spam"), e, api);
 			return false;
 		}

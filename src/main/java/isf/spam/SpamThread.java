@@ -23,7 +23,7 @@ public class SpamThread extends Thread {
 	
 	private static final UIManager UIM = new UIManager("SpamThrd");
 	
-	private static final TimeAbortCall SPAM_BOMB = new TimeAbortCall(R.STR.getString("nodes_action_create_spam"), 1) {
+	private static final TimeAbortCall SPAM_BOMB = new TimeAbortCall(R.STR.getString("nodes_action_create_spam"), 1, TimeAbortCall.TA_SPAM) {
 		@Override
 		public boolean onCall() {
 			return NodeManager.createSpam();
